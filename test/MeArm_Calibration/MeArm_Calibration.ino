@@ -2,31 +2,39 @@
 
 #include <CommandLine.h>
 #include <Servo.h> 
+#include "configuration.h"
+#include "MeArm.h"
 
-#define SHOULDER_MAX 160
-#define SHOULDER_MIN 60
-#define SHOULDER_HOME 90
-#define ELBOW_MAX 180
-#define ELBOW_MIN 20
-#define ELBOW_HOME 90
-#define CLAW_MAX 180
-#define CLAW_MIN 0
-#define CLAW_HOME 170
-#define BASE_MAX 180
-#define BASE_MIN 0
-#define BASE_HOME 90
-
-Servo base, shoulder, elbow, claw ;  
+static void handleHelp(char* tokens);
+static void handleGo(char* token);
+static void handleGd(char* token);
+static void handleHome(char* tokens);
+static void handleClaw(char* token);
 
 // CommandLine instance.
-CommandLine commandLine(Serial, "> ");
+CommandLine commandLine(Serial,(char*)"> ");
+Command CmdHelp = Command((char*)"help", &handleHelp);
+Command CmdHomeAll = Command((char*)"home", &handleHome);
+Command CmdClawMove = Command((char*)"c", &handleClaw);
 
-Command CmdHelp = Command("help", &handleHelp);
-Command CmdShoulderMove = Command("s", &handleShoulder);
-Command CmdBaseMove = Command("b", &handleBase);
-Command CmdElbowMove = Command("e", &handleElbow);
-Command CmdClawMove = Command("c", &handleClaw);
-Command CmdHomeAll = Command("home", &handleHome);
+#define ARM_IK 1
+#if ARM_IK
+    meArm arm(
+      BASE_MIN_PWM,     BASE_MAX_PWM,     BASE_MIN_ANGLE_RAD,     BASE_MAX_ANGLE_RAD,
+      SHOULDER_MIN_PWM, SHOULDER_MAX_PWM, SHOULDER_MIN_ANGLE_RAD, SHOULDER_MAX_ANGLE_RAD,
+      ELBOW_MIN_PWM,    ELBOW_MAX_PWM,    ELBOW_MIN_ANGLE_RAD,    ELBOW_MAX_ANGLE_RAD,
+      CLAW_MIN_PWM,     CLAW_MAX_PWM,     CLAW_MIN_ANGLE_RAD,     CLAW_MAX_ANGLE_RAD);
+
+    Command CmdGo = Command((char*)"go", handleGo);
+    Command CmdGd = Command((char*)"gd", handleGd);
+#else
+    Servo base, shoulder, elbow, claw;  
+    
+    Command CmdShoulderMove = Command((char*)"s", &handleShoulder);
+    Command CmdBaseMove = Command((char*)"b", &handleBase);
+    Command CmdElbowMove = Command((char*)"e", &handleElbow);
+#endif // ARM_IK
+
  
 void setup() 
 { 
@@ -34,18 +42,25 @@ void setup()
     Serial.println("MeArm Calibration");
     Serial.println();
 
-    base.attach(11);  // attaches the servo on pin 11 to the base object
-    shoulder.attach(10);  // attaches the servo on pin 10 to the shoulder object
-    elbow.attach(9);  // attaches the servo on pin 9 to the elbow object
-    claw.attach(6);  // attaches the servo on pin 6 to the claw object
+    commandLine.add(CmdHelp);
+    commandLine.add(CmdHomeAll);
+    commandLine.add(CmdClawMove);
+
+#if ARM_IK
+   arm.begin(BASE_PIN, SHOULDER_PIN, ELBOW_PIN, CLAW_PIN);
+   commandLine.add(CmdGo);
+   commandLine.add(CmdGd);
+#else
+    base.attach(BASE_PIN);  
+    shoulder.attach(SHOULDER_PIN); 
+    elbow.attach(ELBOW_PIN); 
+    claw.attach(CLAW_PIN);
 
     // Commands
-    commandLine.add(CmdHelp);
     commandLine.add(CmdShoulderMove);
     commandLine.add(CmdBaseMove);
     commandLine.add(CmdElbowMove);
-    commandLine.add(CmdClawMove);
-    commandLine.add(CmdHomeAll);
+#endif // ARM_IK
 }
 
 void loop() 
@@ -53,6 +68,65 @@ void loop()
     commandLine.update();
 } 
 
+#if ARM_IK
+
+void handleHome(char* tokens)
+{
+  arm.gotoPoint(HOME_X, HOME_Y, HOME_Z);
+  arm.closeGripper();
+}
+void handleClaw(char* token)
+{
+    token = strtok(NULL, " ");
+    if (token != NULL) {
+        int value = atoi(token);
+        if (value > 0) {
+            arm.openGripper();
+        } else {
+            arm.closeGripper();
+        }
+    }
+}
+void handleGd(char* token)
+{
+    token = strtok(NULL, " ");
+    int x, y, z;
+    if (token != NULL) {
+        x = atoi(token);
+        token = strtok(NULL, " ");
+    }
+    if (token != NULL) {
+        y = atoi(token);
+        token = strtok(NULL, " ");
+    } 
+    if (token != NULL) {
+        z = atoi(token);
+        arm.goDirectlyTo(x, y, z);
+    } else {
+          Serial.println("Go takes three parameter: x y and z. Try 0 66 180");
+    }
+}
+void handleGo(char* token)
+{
+    token = strtok(NULL, " ");
+    int x, y, z;
+    if (token != NULL) {
+        x = atoi(token);
+        token = strtok(NULL, " ");
+    }
+    if (token != NULL) {
+        y = atoi(token);
+        token = strtok(NULL, " ");
+    } 
+    if (token != NULL) {
+        z = atoi(token);
+        arm.gotoPoint(x, y, z);
+    } else {
+          Serial.println("Go takes three parameter: x y and z. Try 0 66 180");
+    }
+}
+
+#else
 bool getPwmValueWithLimits(char *str, int max, int min, int *value_out)
 {
     bool goodValue = false;
@@ -74,45 +148,45 @@ bool getPwmValueWithLimits(char *str, int max, int min, int *value_out)
     }
     return goodValue;
 }
-
 void handleShoulder(char* token)
 {
     int pwm;
-    if (getPwmValueWithLimits(token, SHOULDER_MAX, SHOULDER_MIN, &pwm)) {
+    if (getPwmValueWithLimits(token, SHOULDER_MAX_PWM, SHOULDER_MIN_PWM, &pwm)) {
         shoulder.write(pwm);
     }
 }
 void handleElbow(char* token)
 {
     int pwm;
-    if (getPwmValueWithLimits(token, ELBOW_MAX, ELBOW_MIN, &pwm)) {
+    if (getPwmValueWithLimits(token, ELBOW_MAX_PWM, ELBOW_MIN_PWM, &pwm)) {
         elbow.write(pwm);
     }
 }
 void handleClaw(char* token)
 {
     int pwm;
-    if (getPwmValueWithLimits(token, CLAW_MAX, CLAW_MIN, &pwm)) {
+    if (getPwmValueWithLimits(token, CLAW_MAX_PWM, CLAW_MIN_PWM, &pwm)) {
         claw.write(pwm);
     }
 }
 void handleBase(char* token)
 {
     int pwm;
-    if (getPwmValueWithLimits(token, BASE_MAX, BASE_MIN, &pwm)) {
+    if (getPwmValueWithLimits(token, BASE_MAX_PWM, BASE_MIN_PWM, &pwm)) {
         base.write(pwm);
     }
 }
 void handleHome(char* tokens)
 {
-    base.write(BASE_HOME); 
-    shoulder.write(SHOULDER_HOME); 
-    elbow.write(ELBOW_HOME);
-    claw.write(CLAW_HOME); 
+    base.write(BASE_HOME_PWM); 
+    shoulder.write(SHOULDER_HOME_PWM); 
+    elbow.write(ELBOW_HOME_PWM);
+    claw.write(CLAW_HOME_PWM); 
     Serial.println("Done!");   
 }
-
-void handleHelp(char* tokens)
+#endif
+static void handleHelp(char* tokens)
 {
     Serial.println("No help is available at this time.");
 }
+
