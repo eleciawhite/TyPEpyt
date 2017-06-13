@@ -16,17 +16,17 @@ The files from the mearm-brains-arduino repo are:
   * meArm.cpp, meArm.h (the source file is modified to use the claw valus from config and to respect the servo limits)
 
 Supported commands when the MeArm_Calibration.ino **IK = 0** (direct control of servos)
-  * ```e <pwm>```	*Sets the elbow (right) servo to the given level*
-  * ```s <pwm>``` 	*Sets the shoulder (left) servo to the given level*
-  * ```b <pwm>```	*Sets the base (middle) to the given PWM* 
-  * ```c <pwm>```	*Sets the claw servo to the given PWM*
-  * ```home```		*Homes the servos to all 90 pwm except the claw which goes to 170 for mostly closed.*
+  * ```e <pwm> ```	Sets the elbow (right) servo to the given level.
+  * ```s <pwm> ```  Sets the shoulder (left) servo to the given level.
+  * ```b <pwm> ```	Sets the base (middle) to the given PWM.
+  * ```c <pwm> ```	Sets the claw servo to the given PWM.
+  * ```home ```		*Homes the servos to all 90 pwm except the claw which goes to 170 for mostly closed.
 	
 Supported commands when the MeArm_Calibration.ino **IK = 1** (MeArm arm controls the servos)
-  * ```c <open>```		*Sets the claw to open (1) or closed (0)*
-  * ```home```			*Homes the servos to the empircially determined home position*
-  * ```go <x> <y> <z>``` 	*Uses the values in configuration.h to go to a desired position along a linear path from where you are. *
-  * ```gd <x> <y> <z>```	*Go directly to the position given, no steps. This can be tough on the motors.*
+  * ```c <open> ```		Sets the claw to open (1) or closed (0).
+  * ```home ```			Homes the servos to the empircially determined home position.
+  * ```go <x> <y> <z> ``` 	Uses the values in configuration.h to go to a desired position along a linear path from where you are.
+  * ```gd <x> <y> <z> ```	Go directly to the position given, no steps. This can be tough on the motors.
 
 For my arm, 0 150 70 is a good triplet, 0 200 -40 is extended and low, 0 175 105 is extended and high.
 For a neat visual of travelling along a linear path, go from 0 150 70 to 150 0 70 and note that it doesn't 
