@@ -20,16 +20,16 @@ ELBOW_MIN_ANGLE_RAD =  math.radians(30-90)
 ELBOW_HOME_PWM      =  90     # in PWM counts
 ELBOW_SERVO_CHANNEL =  2
 
-CLAW_MAX_PWM        =  180
+CLAW_MAX_PWM        =  155
 CLAW_MIN_PWM        =  0
-CLAW_CLOSED_PWM     =  180
-CLAW_OPEN_PWM       =  140
-CLAW_HOME_PWM       =  170  # in PWM counts
+CLAW_CLOSED_PWM     =  150
+CLAW_OPEN_PWM       =  120
+CLAW_HOME_PWM       =  140  # in PWM counts
 CLAW_SERVO_CHANNEL  = 3
-CLAW_MAX_ANGLE_RAD  = math.radians(180)
-CLAW_MIN_ANGLE_RAD  = math.radians(0)
-CLAW_OPEN_RAD       = math.radians(140)
-CLAW_CLOSED_RAD     = math.radians(180)
+CLAW_MAX_ANGLE_RAD  = math.radians(0)
+CLAW_MIN_ANGLE_RAD  = math.radians(90)
+CLAW_OPEN_RAD       = math.radians(20)
+CLAW_CLOSED_RAD     = math.radians(3)
 
 
 BASE_MAX_PWM       =   180
