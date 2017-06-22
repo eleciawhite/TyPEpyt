@@ -9,7 +9,7 @@
       <material name="yellow">
         <color rgba="1 1 0.0 0.8"/>
       </material>
-      <origin rpy="0 0 0" xyz="0 0.4 0.0"/>
+      <origin rpy="0 0 0" xyz="0 -0.4 0.0"/>
     </visual>
   </link>
   <joint name="fixed" type="fixed">
@@ -25,11 +25,12 @@
       <origin rpy="0 0 0" xyz="0 0 0.25"/>
     </visual>
   </link>
-  <joint name="hip" type="continuous">
-    <axis xyz="0 0 1"/>
+  <joint name="hip" type="revolute">
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.12"/>
     <parent link="base_link"/>
     <child link="torso"/>
-    <origin rpy="0 0 -1.5707" xyz="0.0 0.0 0.12"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="30" velocity="1.0" lower="0.0" upper="3.14" />
   </joint>
   <link name="upper_arm">
     <visual>
@@ -40,11 +41,12 @@
       <origin rpy="0 0 0" xyz="0  0 0.4"/>
     </visual>
   </link>
-  <joint name="shoulder" type="continuous">
-    <axis xyz="0 1 0"/>
+  <joint name="shoulder" type="revolute">
+    <origin rpy="0 -1.57 0" xyz="0.2  0.0 0.30"/>
     <parent link="torso"/>
     <child link="upper_arm"/>
-    <origin rpy="0 0 0" xyz="0.2  0.0 0.30"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="30" velocity="1.0" lower="0.52" upper="2.79" />
   </joint>
   <link name="lower_arm">
     <visual>
@@ -55,11 +57,12 @@
       <origin rpy="0 0 0" xyz="0 0 0.4"/>
     </visual>
   </link>
-  <joint name="elbow" type="continuous">
-    <axis xyz="0 1 0"/>
+  <joint name="elbow" type="revolute">
+    <origin rpy="0 3.36 0" xyz="0.0 0.0 0.8"/>
     <parent link="upper_arm"/>
     <child link="lower_arm"/>
-    <origin rpy="0 0 0" xyz="0.0 0.0 0.8"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="30" velocity="1.0" lower="0.87" upper="2.44" />
   </joint>
   <link name="hand">
     <visual>
@@ -69,11 +72,12 @@
       <material name="yellow"/>
     </visual>
   </link>
-  <joint name="wrist" type="continuous">
-    <axis xyz="0 1 0"/>
+  <joint name="wrist" type="revolute">
+    <axis xyz="1 0 0"/>
     <parent link="lower_arm"/>
     <child link="hand"/>
     <origin rpy="0 0 0" xyz="0.0 0.0 0.805"/>
+    <limit effort="30" velocity="1.0" lower="0.0" upper="1.57" />
   </joint>
   <transmission name="tran0">
     <type>transmission_interface/SimpleTransmission</type>
