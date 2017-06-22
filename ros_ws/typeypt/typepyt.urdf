@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<robot name="typeypt">
+  <link name="world"/>
+  <link name="base_link">
+    <visual>
+      <geometry>
+	<box size="0.95 1.425 0.02"/>
+      </geometry>
+      <material name="yellow">
+        <color rgba="1 1 0.0 0.8"/>
+      </material>
+      <origin rpy="0 0 0" xyz="0 0.4 0.0"/>
+    </visual>
+  </link>
+  <joint name="fixed" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+  </joint>
+  <link name="torso">
+    <visual>
+      <geometry>
+	<box size="0.53 0.55 0.45"/>
+      </geometry>
+      <material name="yellow"/>
+      <origin rpy="0 0 0" xyz="0 0 0.25"/>
+    </visual>
+  </link>
+  <joint name="hip" type="continuous">
+    <axis xyz="0 0 1"/>
+    <parent link="base_link"/>
+    <child link="torso"/>
+    <origin rpy="0 0 -1.5707" xyz="0.0 0.0 0.12"/>
+  </joint>
+  <link name="upper_arm">
+    <visual>
+      <geometry>
+        <cylinder length="0.8" radius="0.05"/>
+      </geometry>
+      <material name="yellow"/>
+      <origin rpy="0 0 0" xyz="0  0 0.4"/>
+    </visual>
+  </link>
+  <joint name="shoulder" type="continuous">
+    <axis xyz="0 1 0"/>
+    <parent link="torso"/>
+    <child link="upper_arm"/>
+    <origin rpy="0 0 0" xyz="0.2  0.0 0.30"/>
+  </joint>
+  <link name="lower_arm">
+    <visual>
+      <geometry>
+        <cylinder length="0.8" radius="0.05"/>
+      </geometry>
+      <material name="yellow"/>
+      <origin rpy="0 0 0" xyz="0 0 0.4"/>
+    </visual>
+  </link>
+  <joint name="elbow" type="continuous">
+    <axis xyz="0 1 0"/>
+    <parent link="upper_arm"/>
+    <child link="lower_arm"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.8"/>
+  </joint>
+  <link name="hand">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+      <material name="yellow"/>
+    </visual>
+  </link>
+  <joint name="wrist" type="continuous">
+    <axis xyz="0 1 0"/>
+    <parent link="lower_arm"/>
+    <child link="hand"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.805"/>
+  </joint>
+  <transmission name="tran0">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="hip">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor0">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="shoulder">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="elbow">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="tran3">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wrist">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor3">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo>
+    <plugin name="control" filename="libgazebo_ros_control.so"/>
+  </gazebo>
+  <gazebo>
+    <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
+      <jointName>hip, shoulder, elbow, wrist</jointName>
+    </plugin>
+  </gazebo>
+</robot>
