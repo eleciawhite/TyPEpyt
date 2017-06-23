@@ -4,6 +4,7 @@
 
 from __future__ import division
 import time
+import math
 
 # Import the PCA9685 module.
 import Adafruit_PCA9685
@@ -26,8 +27,10 @@ pwm.set_pwm_freq(servo_freq)
 def check_min_max(minVal, maxVal, test):
     if (test < minVal):
 	 test = minVal
+         print "min %d" % (minVal)		
     if (test > maxVal):
 	 test = maxVal
+         print "min %d" % (maxVal)		
     return test
 
 # Helper function to make setting a servo pulse width simpler.
@@ -52,6 +55,12 @@ def e(pulse):
 def c(pulse):
     pulse = check_min_max(CLAW_MIN_PWM, CLAW_MAX_PWM, pulse)
     set_servo_pulse(CLAW_SERVO_CHANNEL, pulse)
+
+def setJointAngles(base, shoulder, elbow, claw):
+    b(int(math.degrees(base)))
+    s(int(math.degrees(shoulder)))
+    e(int(math.degrees(elbow)))
+    c(int(math.degrees(claw)))
 
 def home():
     b(BASE_HOME_PWM)
