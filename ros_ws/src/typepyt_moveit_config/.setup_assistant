@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: typepyt
+    relative_path: typepyt.urdf
+  SRDF:
+    relative_path: config/typeypt.srdf
+  CONFIG:
+    author_name: elecia
+    author_email: elecia@mailinator.com
+    generated_timestamp: 1498169290
