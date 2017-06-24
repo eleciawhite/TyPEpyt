@@ -1,27 +1,24 @@
-# This uses the Adafruit library for controlling the PCA9685. 
-# Author: Tony DiCola originally with extensive modifications from Elecia White
-# License: Public Domain
+#!/usr/bin/env python
+# Code to calibrate the meArm by direct driving the motors
+# This uses the Adafruit I2C and Servo libraries for controlling the PCA9685. 
+# License: Public Domain 
+
 
 from __future__ import division
 import time
 import math
 
 # Import the PCA9685 module.
-import Adafruit_PCA9685
+import Adafruit_PWM_Servo_Driver 
 
 #import local config info
 execfile('MeArm_Cal_Jetson_Configuration.py')
 
 # Initialise the PCA9685 using the default address (0x40) and the bus 
-pwm = Adafruit_PCA9685.PCA9685(address=0x40, busnum=1)
-
-# Configure min and max servo pulse lengths
-servo_min = 0
-servo_max = 180
-servo_freq = 47  # Frequency of the servo: usually 60, empircially determined with a scope to match Arduino 
+pwm = Adafruit_PWM_Servo_Driver.PWM(address=0x40, busnum=1)
 
 # Set frequency to 60hz, good for servos.
-pwm.set_pwm_freq(servo_freq)
+pwm.setPWMFreq(PWM_FREQUENCY)
 
 
 def check_min_max(minVal, maxVal, test):
@@ -35,9 +32,8 @@ def check_min_max(minVal, maxVal, test):
 
 # Helper function to make setting a servo pulse width simpler.
 def set_servo_pulse(channel, pulse):
-    pulse = check_min_max(servo_min, servo_max, pulse)
-    pwm_val = 111 + pulse*2   # empirically determined with a scope to match Arduino 
-    pwm.set_pwm(channel, 0, pwm_val)
+    pwm_val = 150 + int(pulse*450.0/180.0) # magic incantation to make the timing work
+    pwm.setPWM(channel, 0, pwm_val)
 
 
 def b(pulse):
