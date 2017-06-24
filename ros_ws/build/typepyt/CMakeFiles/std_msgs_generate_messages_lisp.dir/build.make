@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/elecia/Ty/TyPEpyt/ros_ws/src
+CMAKE_SOURCE_DIR = /home/nvidia/Ty/TyPEpyt/ros_ws/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/elecia/Ty/TyPEpyt/ros_ws/build
+CMAKE_BINARY_DIR = /home/nvidia/Ty/TyPEpyt/ros_ws/build
 
 # Utility rule file for std_msgs_generate_messages_lisp.
 
@@ -63,10 +63,10 @@ typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/build: std_msgs_generate_
 .PHONY : typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/build
 
 typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/clean:
-	cd /home/elecia/Ty/TyPEpyt/ros_ws/build/typepyt && $(CMAKE_COMMAND) -P CMakeFiles/std_msgs_generate_messages_lisp.dir/cmake_clean.cmake
+	cd /home/nvidia/Ty/TyPEpyt/ros_ws/build/typepyt && $(CMAKE_COMMAND) -P CMakeFiles/std_msgs_generate_messages_lisp.dir/cmake_clean.cmake
 .PHONY : typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/clean
 
 typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/depend:
-	cd /home/elecia/Ty/TyPEpyt/ros_ws/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/elecia/Ty/TyPEpyt/ros_ws/src /home/elecia/Ty/TyPEpyt/ros_ws/src/typepyt /home/elecia/Ty/TyPEpyt/ros_ws/build /home/elecia/Ty/TyPEpyt/ros_ws/build/typepyt /home/elecia/Ty/TyPEpyt/ros_ws/build/typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/nvidia/Ty/TyPEpyt/ros_ws/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/nvidia/Ty/TyPEpyt/ros_ws/src /home/nvidia/Ty/TyPEpyt/ros_ws/src/typepyt /home/nvidia/Ty/TyPEpyt/ros_ws/build /home/nvidia/Ty/TyPEpyt/ros_ws/build/typepyt /home/nvidia/Ty/TyPEpyt/ros_ws/build/typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : typepyt/CMakeFiles/std_msgs_generate_messages_lisp.dir/depend
 

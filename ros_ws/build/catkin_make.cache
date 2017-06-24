@@ -1,2 +1,2 @@
-typepyt
--DCATKIN_DEVEL_PREFIX=/home/elecia/Ty/TyPEpyt/ros_ws/devel -DCMAKE_INSTALL_PREFIX=/home/elecia/Ty/TyPEpyt/ros_ws/install -G Unix Makefiles
+typepyt:typepyt_moveit_config
+-DCATKIN_DEVEL_PREFIX=/home/nvidia/Ty/TyPEpyt/ros_ws/devel -DCMAKE_INSTALL_PREFIX=/home/nvidia/Ty/TyPEpyt/ros_ws/install -G Unix Makefiles

@@ -1,8 +1,8 @@
-# Install script for directory: /home/elecia/Ty/TyPEpyt/ros_ws/src/typepyt
+# Install script for directory: /home/nvidia/Ty/TyPEpyt/ros_ws/src/typepyt
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/elecia/Ty/TyPEpyt/ros_ws/install")
+  set(CMAKE_INSTALL_PREFIX "/home/nvidia/Ty/TyPEpyt/ros_ws/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -33,17 +33,17 @@ if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/elecia/Ty/TyPEpyt/ros_ws/build/typepyt/catkin_generated/installspace/typepyt.pc")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/nvidia/Ty/TyPEpyt/ros_ws/build/typepyt/catkin_generated/installspace/typepyt.pc")
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/typepyt/cmake" TYPE FILE FILES
-    "/home/elecia/Ty/TyPEpyt/ros_ws/build/typepyt/catkin_generated/installspace/typepytConfig.cmake"
-    "/home/elecia/Ty/TyPEpyt/ros_ws/build/typepyt/catkin_generated/installspace/typepytConfig-version.cmake"
+    "/home/nvidia/Ty/TyPEpyt/ros_ws/build/typepyt/catkin_generated/installspace/typepytConfig.cmake"
+    "/home/nvidia/Ty/TyPEpyt/ros_ws/build/typepyt/catkin_generated/installspace/typepytConfig-version.cmake"
     )
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/typepyt" TYPE FILE FILES "/home/elecia/Ty/TyPEpyt/ros_ws/src/typepyt/package.xml")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/typepyt" TYPE FILE FILES "/home/nvidia/Ty/TyPEpyt/ros_ws/src/typepyt/package.xml")
 endif()
 

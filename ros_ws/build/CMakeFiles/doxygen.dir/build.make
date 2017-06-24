@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/elecia/Ty/TyPEpyt/ros_ws/src
+CMAKE_SOURCE_DIR = /home/nvidia/Ty/TyPEpyt/ros_ws/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/elecia/Ty/TyPEpyt/ros_ws/build
+CMAKE_BINARY_DIR = /home/nvidia/Ty/TyPEpyt/ros_ws/build
 
 # Utility rule file for doxygen.
 
@@ -67,6 +67,6 @@ CMakeFiles/doxygen.dir/clean:
 .PHONY : CMakeFiles/doxygen.dir/clean
 
 CMakeFiles/doxygen.dir/depend:
-	cd /home/elecia/Ty/TyPEpyt/ros_ws/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/elecia/Ty/TyPEpyt/ros_ws/src /home/elecia/Ty/TyPEpyt/ros_ws/src /home/elecia/Ty/TyPEpyt/ros_ws/build /home/elecia/Ty/TyPEpyt/ros_ws/build /home/elecia/Ty/TyPEpyt/ros_ws/build/CMakeFiles/doxygen.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/nvidia/Ty/TyPEpyt/ros_ws/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/nvidia/Ty/TyPEpyt/ros_ws/src /home/nvidia/Ty/TyPEpyt/ros_ws/src /home/nvidia/Ty/TyPEpyt/ros_ws/build /home/nvidia/Ty/TyPEpyt/ros_ws/build /home/nvidia/Ty/TyPEpyt/ros_ws/build/CMakeFiles/doxygen.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/doxygen.dir/depend
 
