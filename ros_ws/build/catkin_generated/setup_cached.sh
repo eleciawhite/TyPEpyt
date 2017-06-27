@@ -8,4 +8,3 @@
 
 # modified environment variables
 export PWD="/home/nvidia/Ty/TyPEpyt/ros_ws/build"
-export ROS_PACKAGE_PATH="/home/elecia/Ty/TyPEpyt/ros_ws/src:/home/nvidia/Ty/TyPEpyt/ros_ws/src:/opt/ros/kinetic/share"

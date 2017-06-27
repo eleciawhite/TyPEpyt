@@ -139,7 +139,7 @@
     <parent link="lower_arm"/>
     <child link="hand"/>
     <origin rpy="0 0 0" xyz="0.0 0.0 0.805"/>
-    <limit effort="30" velocity="1.0" lower="0.0" upper="1.57" />
+    <limit effort="30" velocity="1.0" lower="0.0" upper="2.7" />
   </joint>
   <transmission name="tran0">
     <type>transmission_interface/SimpleTransmission</type>

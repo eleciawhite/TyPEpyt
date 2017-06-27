@@ -3,10 +3,15 @@
 # This uses the Adafruit I2C and Servo libraries for controlling the PCA9685. 
 # License: Public Domain 
 
+# ROS imports
 import rospy
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Header
+from std_msgs.msg import Header, String
+
+
+# non-ROS imports
 import MeArm_Cal_Jetson_Configuration as cal
+import math
 
 # Import the PCA9685 module.
 import Adafruit_PWM_Servo_Driver 
@@ -17,7 +22,7 @@ class JointContoller():
 
         # Set up ROS talker to publish joint angles
         self.pub = rospy.Publisher('joint_states', JointState, queue_size=10)
-        rospy.init_node('joint_state_publisher')
+        rospy.init_node('mearm_controller')
         self.rate = rospy.Rate(10) # 10hz
         
 
@@ -34,7 +39,7 @@ class JointContoller():
         self.pwm.setPWMFreq(cal.PWM_FREQUENCY)
     	self.home()
         
-
+        rospy.Subscriber('chatter', String, self.callback)
 
 
     def check_min_max(self, minVal, maxVal, test):
@@ -48,6 +53,7 @@ class JointContoller():
 
     # Helper function to make setting a servo pulse width simpler.
     def set_servo_pulse(self, channel, pulse):
+        self.joint_state.position[channel] = math.radians(pulse);
         pwm_val = 150 + int(pulse*450.0/180.0) # magic incantation to make the timing work
         self.pwm.setPWM(channel, 0, pwm_val)
 
@@ -80,10 +86,13 @@ class JointContoller():
         self.c(cal.CLAW_HOME_PWM)
 
     def off(self):
-        self.pwm.set_pwm(cal.BASE_SERVO_CHANNEL, 0, 0)
-        self.pwm.set_pwm(cal.SHOULDER_SERVO_CHANNEL, 0, 0)
-        self.pwm.set_pwm(cal.ELBOW_SERVO_CHANNEL, 0, 0)
-        self.pwm.set_pwm(cal.CLAW_SERVO_CHANNEL, 0, 0)
+        self.pwm.setPWM(cal.BASE_SERVO_CHANNEL, 0, 0)
+        self.pwm.setPWM(cal.SHOULDER_SERVO_CHANNEL, 0, 0)
+        self.pwm.setPWM(cal.ELBOW_SERVO_CHANNEL, 0, 0)
+        self.pwm.setPWM(cal.CLAW_SERVO_CHANNEL, 0, 0)
+
+    def callback(self, data):
+        rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
 
     def loop(self):
         #check for commands, publish states
@@ -91,6 +100,7 @@ class JointContoller():
             self.joint_state.header.stamp = rospy.Time.now()
             self.pub.publish(self.joint_state)
             self.rate.sleep()
+        self.off()
 
 
 if __name__ == '__main__':
