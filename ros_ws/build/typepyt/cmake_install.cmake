@@ -33,26 +33,6 @@ if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/typepyt/msg" TYPE FILE FILES "/home/nvidia/Ty/TyPEpyt/ros_ws/src/typepyt/msg/JointAngles.msg")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/typepyt/action" TYPE FILE FILES "/home/nvidia/Ty/TyPEpyt/ros_ws/src/typepyt/action/ArmJointAngles.action")
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/typepyt/msg" TYPE FILE FILES
-    "/home/nvidia/Ty/TyPEpyt/ros_ws/devel/share/typepyt/msg/ArmJointAnglesAction.msg"
-    "/home/nvidia/Ty/TyPEpyt/ros_ws/devel/share/typepyt/msg/ArmJointAnglesActionGoal.msg"
-    "/home/nvidia/Ty/TyPEpyt/ros_ws/devel/share/typepyt/msg/ArmJointAnglesActionResult.msg"
-    "/home/nvidia/Ty/TyPEpyt/ros_ws/devel/share/typepyt/msg/ArmJointAnglesActionFeedback.msg"
-    "/home/nvidia/Ty/TyPEpyt/ros_ws/devel/share/typepyt/msg/ArmJointAnglesGoal.msg"
-    "/home/nvidia/Ty/TyPEpyt/ros_ws/devel/share/typepyt/msg/ArmJointAnglesResult.msg"
-    "/home/nvidia/Ty/TyPEpyt/ros_ws/devel/share/typepyt/msg/ArmJointAnglesFeedback.msg"
-    )
-endif()
-
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/typepyt/cmake" TYPE FILE FILES "/home/nvidia/Ty/TyPEpyt/ros_ws/build/typepyt/catkin_generated/installspace/typepyt-msg-paths.cmake")
 endif()
 

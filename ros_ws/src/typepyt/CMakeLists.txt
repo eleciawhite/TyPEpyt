@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   rospy
   sensor_msgs
+#  control_msgs
   actionlib
   actionlib_msgs
 )
@@ -50,10 +51,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-   FILES
-   JointAngles.msg
-)
+#add_message_files(
+#   FILES
+#   TFollowJointTajectory.msg
+#)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -63,11 +64,11 @@ add_message_files(
 # )
 
 ## Generate actions in the 'action' folder
-add_action_files(
-   DIRECTORY action
-   FILES
-   ArmJointAngles.action
-)
+#add_action_files(
+#   DIRECTORY action
+#   FILES
+#   ArmJointAngles.action
+#)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
@@ -75,7 +76,8 @@ generate_messages(
    actionlib_msgs
    geometry_msgs
    sensor_msgs
- )
+#   control_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -110,7 +112,8 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES typepyt
 #  CATKIN_DEPENDS  rospy sensor_msgs
-  CATKIN_DEPENDS actionlib_msgs sensor_msgs geometry_msgs
+  CATKIN_DEPENDS actionlib_msgs sensor_msgs geometry_msgs  
+# control_msgs
 #  DEPENDS system_lib
 )
 

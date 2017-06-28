@@ -8,4 +8,3 @@
 
 # modified environment variables
 export PWD="/home/nvidia/Ty/TyPEpyt/ros_ws/build"
-export PYTHONPATH="/home/nvidia/Ty/TyPEpyt/ros_ws/devel/lib/python2.7/dist-packages:$PYTHONPATH"

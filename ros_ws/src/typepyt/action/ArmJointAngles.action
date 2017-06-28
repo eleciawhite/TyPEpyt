@@ -1,8 +1,8 @@
 # Goal
-JointAngles angles
+control_msgs/FollowJointTrajectory angles
 ---
 # Result
-JointAngles angles
+control_msgs/FollowJointTrajectory angles
 ---
 # Feedback
-JointAngles angles
+control_msgs/FollowJointTrajectory angles
