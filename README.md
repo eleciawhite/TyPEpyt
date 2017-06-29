@@ -13,19 +13,22 @@ Robot Operating System (ROS) workspace for catkins.
 Currently, this works with rvis, gazebo, and moveit. 
 
 To lanch all three in a demo environment:
-```	cd ros_ws
+```	
+        cd ros_ws
 	source devel/setup.bash
 	roslaunch typepyt_moveit_config all.launch
 ```
 
 For just Gazebo, change the last line to:
-```	roslaunch typepyt typepyt.launch
+```	
+        roslaunch typepyt typepyt.launch
 ```
 
 This code also works with a meArm python controller (typepyt/scripts) and the MoveIt motion controller. The meArm is connected to a PCA9685 which is connected to I2C1.
 
 To make that work, you probably need a bunch of windows insetead of backgrounding (&) the different verbose commands:
-``` roscore &
+``` 
+    roscore &
     cd ros_ws
     source devel/setup.bash
     cd src/typepyt/scripts
