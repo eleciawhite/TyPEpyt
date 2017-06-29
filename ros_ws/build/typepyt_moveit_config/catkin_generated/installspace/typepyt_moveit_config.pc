@@ -1,0 +1,8 @@
+prefix=/home/nvidia/Ty/TyPEpyt/ros_ws/install
+
+Name: typepyt_moveit_config
+Description: Description of typepyt_moveit_config
+Version: 0.3.0
+Cflags: 
+Libs: -L/home/nvidia/Ty/TyPEpyt/ros_ws/install/lib 
+Requires: 

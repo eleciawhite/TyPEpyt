@@ -1,0 +1,8 @@
+prefix=/home/nvidia/Ty/TyPEpyt/ros_ws/devel
+
+Name: typepyt
+Description: Description of typepyt
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/nvidia/Ty/TyPEpyt/ros_ws/devel/lib 
+Requires: actionlib_msgs sensor_msgs geometry_msgs
