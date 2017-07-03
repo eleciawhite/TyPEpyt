@@ -12,10 +12,29 @@ Similar code for the MeArm on the Jetson is in python with MeArm_Cal_Jetson bein
 Robot Operating System (ROS) workspace for catkins. 
 Currently, this works with rvis, gazebo, and moveit. 
 
-To lanch all three:
-```	cd ros_ws
+To lanch all three in a demo environment:
+```	
+        cd ros_ws
 	source devel/setup.bash
-	roslaunch typepyt_moveit_config all.launch```
+	roslaunch typepyt_moveit_config all.launch
+```
 
 For just Gazebo, change the last line to:
-```	roslaunch typepyt typepyt.launch```
+```	
+        roslaunch typepyt typepyt.launch
+```
+
+This code also works with a meArm python controller (typepyt/scripts) and the MoveIt motion controller. The meArm is connected to a PCA9685 which is connected to I2C1.
+
+To make that work, you probably need a bunch of windows insetead of backgrounding (&) the different verbose commands:
+``` 
+    roscore &
+    cd ros_ws
+    source devel/setup.bash
+    cd src/typepyt/scripts
+    python meArm.py &
+    roslaunch typepyt_moveit_config demo.launch 
+```
+
+Note that there is are bugs in the meArm URDF: it has simple linkages for the shoulder and elbow that make it so the motion 
+planner tries to go in the Z direction but the physical version doesn't match. Also, I don't know how to model the end effector so I put it in as a wrist but that doesn't get visualized.
