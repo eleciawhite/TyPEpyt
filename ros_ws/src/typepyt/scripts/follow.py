@@ -7,18 +7,6 @@ VIDEO_CHANNEL = 1
 
 cap = cv2.VideoCapture(VIDEO_CHANNEL)
 
-def mask(img, upper, lower):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower_red = np.array([0, 50, 50])
-    upper_red = np.array([10, 255, 255])
-    mask0 = cv2.inRange(hsv, lower_red, upper_red)
-    upper_red = np.array([190, 255, 255])
-    lower_red = np.array([170, 50, 50])
-    mask1 = cv2.inRange(hsv, lower_red, upper_red)
-    mask = mask0+mask1
-    return mask
-
-
 def mask(img, upper_in, lower_in):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     lower = np.array(lower_in)
@@ -37,6 +25,13 @@ def show_img(img):
         cv2.imshow('show', img)
     cv2.destroyAllWindows()
 
+def get_laser_centroid(mask): # from mask
+    M = cv2.moments(mask)
+    if M['m00'] > 0:
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        return (cx, cy)
+    return (-1, -1)
 
 while cv2.waitKey(10) != ord('q'):
     ret, frame = cap.read()
