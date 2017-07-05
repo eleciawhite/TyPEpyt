@@ -51,14 +51,16 @@ def loop():
         if cx == -1:
             print 'no dest'
             buttwiggle()
-            time.sleep(random.uniform(0.005, 0.05))
+            time.sleep(0.003)
+#            time.sleep(random.uniform(0.005, 0.05))
         else:
             rx, rz = tf_cam_to_robot(cx, cy)
             ry = 150
             d = arm.getDistance(rx,ry,rz)
             arm.gotoPointMaxDist(rx,ry,rz,d/3.0)
-            time.sleep(0.01)
+            time.sleep(0.003)
                 
+
 
 class TyContoller():
 
@@ -72,12 +74,12 @@ class TyContoller():
         
         self.pos = TyPositionGoal.TyPositionGoal(debugging = 1)
 
-    def loop(self):
+#    def loop(self):
 
 
-if __name__ == '__main__':
-    ty = TyContoller()
-    ty.loop()
+#if __name__ == '__main__':
+#    ty = TyContoller()
+#    ty.loop()
 
 
 #def pub():
