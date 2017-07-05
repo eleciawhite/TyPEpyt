@@ -43,22 +43,20 @@ def buttwiggle():
     y = int(random.uniform(70,80))
     z = int(random.uniform(3, 8))
     d = arm.getDistance(x,y,z)
-    arm.gotoPointMaxDist(x,y,z,d/10.0)
+    arm.gotoPointMaxDist(x,y,z,d/5.0)
 
 def loop():
     while (True):
-        cx, cy = pos.getPositionGoal()
-        if cx == -1:
+        p = pos.getPositionGoal()
+        if p == None:
             print 'no dest'
             buttwiggle()
-            time.sleep(0.003)
-#            time.sleep(random.uniform(0.005, 0.05))
         else:
-            rx, rz = tf_cam_to_robot(cx, cy)
+            rx, rz = tf_cam_to_robot(p[0], p[1])
             ry = 150
             d = arm.getDistance(rx,ry,rz)
             arm.gotoPointMaxDist(rx,ry,rz,d/3.0)
-            time.sleep(0.003)
+        time.sleep(0.003)
                 
 
 
