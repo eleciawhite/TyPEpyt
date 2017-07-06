@@ -53,6 +53,8 @@ class meArm():
         rec["zero"] = zero
         rec["min"] = n_min
         rec["max"] = n_max
+        rec["a_min"] = a_min
+        rec["a_max"] = a_max
         return rec
     
     def angle2pwm(self, servo, angle):
@@ -60,9 +62,15 @@ class meArm():
         n_max = self.servoInfo[servo]["max"]
         n_min = self.servoInfo[servo]["min"]
         ret = int(0.5 + (self.servoInfo[servo]["zero"] + self.servoInfo[servo]["gain"] * angle))
-        if (ret > n_max) : print " x (%d)" % ret; ret = n_max
-        if (ret < n_min) : print " n (%d)" % ret; ret = n_min
-        return ret
+        if (ret > n_max) : 
+            print " x %d (%d -> %d)" % (math.degrees(angle), ret, n_max)
+            ret = n_max
+            angle = self.servoInfo[servo]["a_max"]
+        if (ret < n_min) : 
+            print " n %d (%d -> %d)" % (math.degrees(angle), ret, n_min)
+            ret = n_min
+            angle = self.servoInfo[servo]["a_min"]
+        return (angle, ret)
 
     def setPwm(self, channel, pwm):
         # convert to local servo counts
@@ -76,17 +84,19 @@ class meArm():
             radBase = angles[0]
             radShoulder = angles[1]
             radElbow = angles[2]
-            pwm_val = self.angle2pwm("base", radBase)
+            radBase, pwm_val = self.angle2pwm("base", radBase)
             self.setPwm(self.base, pwm_val)
-            print "base %d %d" % (pwm_val, math.degrees(radBase));
-            pwm_val = self.angle2pwm("shoulder", radShoulder)
+
+            radShoulder, pwm_val = self.angle2pwm("shoulder", radShoulder)
             self.setPwm(self.shoulder, pwm_val)
-            print "shoulder %d %d" % (pwm_val, math.degrees(radShoulder));
-            pwm_val = self.angle2pwm("elbow", radElbow)
+
+            radElbow, pwm_val = self.angle2pwm("elbow", radElbow)
             self.setPwm(self.elbow, pwm_val)
-            print "elbow %d %d" % (pwm_val, math.degrees(radElbow));
+
             self.x, self.y, self.z = kinematics.unsolve(radBase, radShoulder, radElbow)
-            print "goto %s (intended %s)" % ([int(self.x), int(self.y), int(self.z)],[int(x),int(y),int(z)])
+            print "goto %s (actual %s ; ang bse %s ) " % ([int(x),int(y),int(z)], 
+                                                    [int(self.x), int(self.y), int(self.z)],
+                                                    [int(math.degrees(radBase)), int(math.degrees(radShoulder)), int(math.degrees(radElbow))])
     		
     def gotoPoint(self, x, y, z):
         """Travel in a straight line from current position to a requested position"""
@@ -107,6 +117,10 @@ class meArm():
     	dist = kinematics.distance(self.x, self.y, self.z, x, y, z)
     	return dist
 
+    def getDistanceBetween(self, x, y, z, x1, y1, z1):
+    	dist = kinematics.distance(x1, y1, z1, x, y, z)
+    	return dist
+
     def gotoPointMaxDist(self, x, y, z, maxDist):
         """Travel in a straight line from current position to a requested position"""
         x0 = self.x
@@ -119,21 +133,33 @@ class meArm():
 
     def openGripper(self):
         """Open the gripper, dropping whatever is being carried"""
-    	self.setPwm(self.gripper, self.angle2pwm("gripper", CLAW_OPEN_RAD))
+        _, pwm = self.angle2pwm("gripper", CLAW_OPEN_RAD)
+    	self.setPwm(self.gripper, pwm)
     	
     def closeGripper(self):
         """Close the gripper, grabbing onto anything that might be there"""
-    	self.setPwm(self.gripper, self.angle2pwm("gripper", CLAW_CLOSED_RAD))
+        _, pwm = self.angle2pwm("gripper", CLAW_CLOSED_RAD)
+    	self.setPwm(self.gripper,pwm)
 
     def gripperClosePercent(self, percentOpen):
         """Close gripper by some percent, 100 is tightly closed and 0 is fully open"""
         clawDistance = self.maxGripper - self.minGripper
         clawAngle = clawDistance*(percentOpen/100.0) + self.minGripper
-    	self.setPwm(self.gripper, self.angle2pwm("gripper", clawAngle))
+        _, pwm = self.angle2pwm("gripper", clawAngle)
+    	self.setPwm(self.gripper, pwm)
     
     def isReachable(self, x, y, z):
-        """Returns True if the point is (theoretically) reachable by the gripper"""
-    	return kinematics.solve(x, y, z, (0,0,0))
+        """Returns True if the point is (theoretically) reachable """
+        angles = [0,0,0]
+        if kinematics.solve(x, y, z, angles) != None:
+            radBase, _ = self.angle2pwm("base", angles[0])
+            if radBase == angles[0]:
+                radShoulder, _ = self.angle2pwm("shoulder", angles[1])
+                if radShoulder == angles[1]:
+                    radElbow, _ = self.angle2pwm("elbow", angles[2])
+                    if radElbow == angles[2]:
+                        return True
+        return False
     
     def getPos(self):
         """Returns the current position of the gripper"""

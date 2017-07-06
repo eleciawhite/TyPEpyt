@@ -8,13 +8,11 @@ class LaserTracking():
         self.debugging = debugging
 
     def getLaserPosition(self, frame):
-        self.debugShow('cam', frame)
         laser_mask = self.maskLaser(frame)
         arm_mask = self.maskArm(frame)
 
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         self.debugShow('combo arm and laser', cv2.merge((gray_frame, arm_mask, laser_mask)))
-        cv2.waitKey(1)
 
         laserDotContour = self.findContourOfLaserPointerDot(laser_mask)
         if laserDotContour != None:
