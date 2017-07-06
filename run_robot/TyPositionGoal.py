@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import LaserTracking
 
+BAD_COUNT_INIT = 5
+GOOD_COUNT_GOAL = 3
 
 class MinMaxPointStruct():
     def __init__(self, minPoint, maxPoint):
@@ -28,6 +30,9 @@ class TyPositionGoal():
         self.clickEvent = False
         self.clickPoint = PointStruct(0,0)
         self.cameraImageName = 'Ty View'
+        self.badCount = 0
+        self.goodCount = 0
+        self.goalPoint = PointStruct(0,0)
 
     def mouseClick(self, event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDBLCLK:
@@ -94,7 +99,7 @@ class TyPositionGoal():
         return (outx, outy)
 
 
-    def getPositionGoal(self):
+    def getPositionGoalForThisFrame(self):
         ret, frame = self.cam.read()
         cv2.imshow(self.cameraImageName, frame)
         self.img = frame
@@ -103,8 +108,28 @@ class TyPositionGoal():
         if True == ret:
             p = self.laserTracking.getLaserPosition(frame)
             if p:
-                return self.tf_cam_to_robot(p[0], p[1])
+                return p
         return None # still here? that's bad
+
+    def getPositionGoal(self):
+        p = self.getPositionGoalForThisFrame()                
+        if p == None:
+            if self.badCount == 0 :          
+                self.goodCount = 0
+                return None
+            else : # might be a blip, use last goal point
+                self.badCount -= 1
+                return (self.tf_cam_to_robot(self.goalPoint.x, self.goalPoint.y))        
+        else: # got a good result ... but is it real?
+            self.goodCount += 1
+            if self.goodCount > GOOD_COUNT_GOAL:
+                self.badCount = BAD_COUNT_INIT
+                self.goalPoint.x = p[0]
+                self.goalPoint.y = p[1]
+                return(self.tf_cam_to_robot(self.goalPoint.x, self.goalPoint.y))
+            else:
+                return None
+
             
     def __del__(self):
         self.cam.release()

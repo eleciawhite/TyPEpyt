@@ -39,6 +39,9 @@ class meArm():
     	self.gripper = block * 4 + 3
     	self.pwm.setPWMFreq(pwmFrequency)
     	self.closeGripper()
+        self.home()
+
+    def home(self):
     	self.goDirectlyTo(HOME_X, HOME_Y, HOME_Z)
     	
     def setupServo(self, n_min, n_max, a_min, a_max):
@@ -128,6 +131,7 @@ class meArm():
         z0 = self.z
         dist = kinematics.distance(x0, y0, z0, x, y, z)
         if dist < maxDist: maxDist = dist
+        if maxDist == 0: maxDist = dist
         self.goDirectlyTo(x0 + (x - x0) * maxDist / dist, y0 + (y - y0) * maxDist / dist, z0 + (z - z0) * maxDist / dist)
 
 
