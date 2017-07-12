@@ -5,7 +5,7 @@ import numpy as np
 import LaserTracking
 
 BAD_COUNT_INIT = 5
-GOOD_COUNT_GOAL = 3
+GOOD_COUNT_GOAL = 2
 
 class MinMaxPointStruct():
     def __init__(self, minPoint, maxPoint):
@@ -23,10 +23,10 @@ class TyPositionGoal():
         self.cam = cv2.VideoCapture(videoChannel)
         self.laserTracking = LaserTracking.LaserTracking(debugging)
 
-        self.robotLimits = MinMaxPointStruct(minPoint = PointStruct(-150, 0), 
-                                            maxPoint = PointStruct(150,0))
+        self.robotLimits = MinMaxPointStruct(minPoint = PointStruct(-120, -15), 
+                                            maxPoint = PointStruct(120,105))
         self.cameraLimits = MinMaxPointStruct(minPoint = PointStruct(0, 0), 
-                                            maxPoint = PointStruct(640,480))
+                                            maxPoint = PointStruct(640,420))
         self.clickEvent = False
         self.clickPoint = PointStruct(0,0)
         self.cameraImageName = 'Ty View'
@@ -87,10 +87,10 @@ class TyPositionGoal():
         factor = (aval.x - a.min.x) / float(atotalx)
         bvalx =  (factor * btotalx) + b.min.x
 
-        atotaly = -(a.max.y - a.min.y)
-        btotaly = b.max.y - b.min.y
+        atotaly = (a.max.y - a.min.y)
+        btotaly = -(b.max.y - b.min.y)
         factor = (aval.y - a.min.y) / float(atotaly)
-        bvaly =  (factor * btotaly) + b.min.y
+        bvaly =  (factor * btotaly) + b.max.y
 
         return int(bvalx), int(bvaly)
 
@@ -129,6 +129,9 @@ class TyPositionGoal():
                 return(self.tf_cam_to_robot(self.goalPoint.x, self.goalPoint.y))
             else:
                 return None
+
+    def killWindows(self):
+        cv2.destroyAllWindows()
 
             
     def __del__(self):

@@ -163,6 +163,7 @@ class meArm():
                     radElbow, _ = self.angle2pwm("elbow", angles[2])
                     if radElbow == angles[2]:
                         return True
+        print 'Not reachable: %d %d %d'%(x,y,z)
         return False
     
     def getPos(self):

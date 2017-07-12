@@ -11,7 +11,7 @@ import random
 import time
 
 VIDEO_CHANNEL = 1
-
+Y_MIDDLE_ZONE = 100
 
 class TyContoller():
 
@@ -56,21 +56,42 @@ class TyContoller():
 
     def cat(self):
         currentGripperPercent = 95
-        ry = 100
+        ry = Y_MIDDLE_ZONE
         while (True):
             p = self.pos.getPositionGoal()
             if p == None:
                 print 'no dest'
                 self.buttwiggle()
+                ry = Y_MIDDLE_ZONE
             else:
                 rx = p[0]
                 rz = p[1]
-                ry = self.middleDistanceY(rx, ry, rz)
-                d = self.arm.getDistance(rx,ry,rz)
-                self.arm.gotoPointMaxDist(rx,ry,rz,d/3.0)
+                ry = self.middleDistanceY(rx, ry, rz) # keep y in the good range for these x,z values
+                d = self.arm.getDistance(rx, ry, rz)
+                print 'want [%d, %d, %d]'%(rx, ry, rz)
+                self.arm.gotoPointMaxDist(rx, ry, rz, d/3.0) # go partway there
                 currentGripperPercent = self.gripperSnap(d, currentGripperPercent)
-            time.sleep(0.003)
+#            time.sleep(0.003)
                     
+    def moveJoint(self): # move base to show difference between motion
+        self.arm.gotoPoint(-120, 75, 70) # base angle = 60 based on debug out
+        baseAngle = -60
+        while baseAngle <= 60:
+            _, pwm_val = self.arm.angle2pwm("base", math.radians(baseAngle))
+            self.arm.setPwm(self.arm.base, pwm_val)
+            baseAngle += 5
+            time.sleep(0.03)
+        time.sleep(1.0)
+        while baseAngle >= -60:
+            _, pwm_val = self.arm.angle2pwm("base", math.radians(baseAngle))
+            self.arm.setPwm(self.arm.base, pwm_val)
+            baseAngle -= 5
+            time.sleep(0.03)
+
+    def moveKinematic(self):
+        self.arm.gotoPoint(120, 75, 70)
+        time.sleep(1.0)
+        self.arm.gotoPoint(-120, 75, 70)
 
     def middleDistanceY(self, x, y, z):
         midX = 0 ; midY = 85; midZ = 10
@@ -79,17 +100,19 @@ class TyContoller():
         d0 = d
         print 'y d %d' % d
         increment = -20
-        if d > 120 and y > 0:
+        if d > 120:
             y += increment;
             d = self.arm.getDistanceBetween(x, y, z, midX, midY, midZ)
             if (d > d0) : y = y0 - increment
-            if y < 0 : y = 0
+            d = self.arm.getDistanceBetween(x, y, z, midX, midY, midZ)
             print 'd- %d y %d'% (d, y)
         if d < 80:
-            y += increment;
+            y -= increment;
             d = self.arm.getDistanceBetween(x, y, z, midX, midY, midZ)
-            if (d < d0) : y = y0 - increment
+            if (d < d0) : y = y0 + increment
+            d = self.arm.getDistanceBetween(x, y, z, midX, midY, midZ)
             print 'd+ %d y %d'% (d, y)
+        if y < 0 : y = 0
         return y
         
     def calStep(self, x, y, z, x_adder, z_adder, resultGoal):
@@ -112,31 +135,30 @@ class TyContoller():
         self.pos.startCalibration()
 
         # right, lower
-        x = 0; y = 100; z = 80  # near center
+        x = 0; y = 150; z = 80  # near center
         x, y, z = self.calStep(x, y, z, 30, 0, True) # push out of range
         x, y, z = self.calStep(x, y, z, -10, 0, False) # bring into range
-        x, y, z = self.calStep(x, y, z, 0, -10, True)  # push out of range
         rightx = x
 
-        print '----------------------------------'
+        print '---------------------------------- %d %d'%(x,z)
 
         # left, lower
-        x = 0; y = 100; z = 80
-
+        x = 0; y = 150; z = 80
         x, y, z = self.calStep(x, y, z, -30, 0, True) # push out of range
         x, y, z = self.calStep(x, y, z, 10, 0, False) # bring into range
-        x, y, z = self.calStep(x, y, z, 0, -10, True) # push out of range
         leftx = x
 
-        print '************************************'
+        print '************************************ %d %d'%(x,z)
 
         # center and look for upper
         x = int((rightx + leftx)/2.0)     
-        y = 100; z = 80
+        y = 150; z = 80
         print x
         x, y, z = self.calStep(x, y, z, 0, 5, True) # push out of range
+        y = 150; z = 80
+        x, y, z = self.calStep(x, y, z, 0, -10, True)  # push out of range
 
-        print 'Cal complete'
+        print 'Cal complete  %d %d'%(x,z)
             
     
 
