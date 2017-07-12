@@ -1,5 +1,24 @@
-meArmPi
+
+Ty: a laser chasing robot arm
 =======
+
+To run:
+```
+$ python
+>>> execfile('ty.py')
+>>> ty.cat()
+```
+
+Note that ty.cal is useful for calibrating the robot positions vs the camera view. Fixed configuration should be in MeArm_Cal_Jetson_Configuration.py
+
+
+TyPositionGoal.py does the translation between camera x,y and robot x,z. The y is used to maintain a relatively constant distance between the end effector and robot base. LaserTracking.py uses OpenCV to find the laser in the camera. 
+
+meArm.py, kinematics.py and Adafruit_PWM_Servo_Driver.py are all code I got from other places (see below).
+
+
+meArmPi
+------
 
 Inverse Kinematics movement control library in Python for Phenoptix meArm on Jetson via Adafruit PWM Servo driver.
 
