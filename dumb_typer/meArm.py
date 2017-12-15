@@ -102,17 +102,16 @@ class meArm():
                                                         [int(self.x), int(self.y), int(self.z)],
                                                         [int(math.degrees(radBase)), int(math.degrees(radShoulder)), 
                                                             int(math.degrees(radElbow))])
-            else: 
-                print "No solution for %s" % [int(x),int(y),int(z)]
+        else: # no kinematic solution 
+            print "No solution for %s" % [int(x),int(y),int(z)]
     
-    def gotoPoint(self, x, y, z, debugPrint=1):
+    def gotoPoint(self, x, y, z, step = 10, debugPrint=1):
         """Travel in a straight line from current position to a requested position"""
     	x0 = self.x
     	y0 = self.y
     	z0 = self.z
     	dist = kinematics.distance(x0, y0, z0, x, y, z)
-    	step = 10
-    	i = 0
+    	i = 1
     	while i < dist:
     		self.goDirectlyTo(x0 + (x - x0) * i / dist, y0 + (y - y0) * i / dist, z0 + (z - z0) * i / dist, debugPrint)
     		time.sleep(0.03)

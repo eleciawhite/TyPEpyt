@@ -39,9 +39,6 @@ class TyContoller():
     def open(self, percent=75):
         self.arm.gripperClosePercent(percent)
 
-    def close(self, percent=89):
-        self.arm.gripperClosePercent(percent)
-
     def checkBaselineCurrrent(self):
         self.currentCheckTime = time.time()
         self.baselineCurrent = self.adc.magnitude()
@@ -84,60 +81,67 @@ class TyContoller():
             print "%s: pushback %s mag %s (%s)" % (time.time(), self.baselineCurrent, adc, (adc - self.baselineCurrent))  
         if abs(adc - self.baselineCurrent) >= pushbackCurrent:
             print "done, pushed"
+            return True
         else:
             print "done, timed out"
-
+            return False
 
     def pressString(self, string):
         for c in string:
             self.pressKey(c)
+            time.sleep(0.2)
 
-    def pressKey(self, char):
-        keypos = list(keyCal.KEYPOS[char]) #make a copy 
+    # 0. At neutral
+    # 1. Go to place above the key, will take a time proportional to the distance
+    # 2. Press key until current feedback says done
+    # 3. Raise key
+    # 4. Return key to neutral 
+    def pressKey(self, char, delayDiv=300.0):
+        debugPrint = 1
+        keypos = list(keyCal.KEYPOS[char]) #make a copy of the location because we'll edit Z
 
-        self.checkBaselineCurrrent()
-        dist = self.gotoXY(keypos)
-        print dist
-#        self.waitUntilDone(minTime = dist/300.0, timeout = 0.5)
-        self.waitUntilDone(minTime = 0.1, timeout = dist/300.0)
-        
+        self.checkBaselineCurrrent() 
 
-        self.checkBaselineCurrrent()
-        self.gotoPos(keyCal.KEYPOS[char])
-        self.waitForPushback(1.0)
-        print "gotoNicely"
+        [keyX, keyY, keyZ] = keypos
+        [origX, origY, origZ] = self.arm.getPos()       # ideally this is the neutral position
+
+        # 1. Goto to the XY location
+        dist = self.arm.getDistance(keyX, keyY, origZ)
+        self.arm.goDirectlyTo(x=keyX, y=keyY, z=origZ, debugPrint=debugPrint)		
+        print "goto XY %s %s (%s, %s)" % (keypos, self.arm.getPos(), self.arm.isReachable(x=keyX, y=keyY, z=origZ), dist)
+        self.waitUntilDone(minTime = dist/delayDiv, timeout = dist/delayDiv)
+
+        # 2. Press key until feedback indicates it is done
+        print "key"
+        self.checkBaselineCurrrent() 
+        self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ, debugPrint=debugPrint)		
+        done = self.waitForPushback(0.25)
+
+        # 3. Raise key
+        print "raise key"
+        self.arm.goDirectlyTo(x=keyX, y=keyY, z=origZ-10, debugPrint=debugPrint)		
+        self.waitUntilDone(minTime = 0.1, timeout = 0.25) # very likely to timeout as it is going up
+
+        # 4. Return key to neutral
+        print "back to neutral"
         self.gotoNice(keyCal.KEYBOARD_NEUTRAL)
 
-    def gotoXY(self, pos):
-        [goalX, goalY, goalZ] = pos
-        [curX, curY, curZ] = self.arm.getPos()
-        
-        dist = self.arm.getDistance(goalX, goalY, curZ)
-        self.arm.goDirectlyTo(x=goalX, y=goalY, z=curZ, debugPrint=1)		
-        print "goto XY %s %s %s" % (pos, self.arm.getPos(), self.arm.isReachable(x=goalX, y=goalY, z=curZ))
-        return dist
 
-    def gotoXY2(self, pos):
-        [goalX, goalY, goalZ] = pos
-        [curX, curY, curZ] = self.arm.getPos()
-        dist = self.arm.getDistance(goalX, goalY, curZ)
-        self.arm.goDirectlyTo(x=goalX, y=goalY, z=curZ, debugPrint=1)		
-        print "goto XY %s %s %s" % (pos, self.arm.getPos(), self.arm.isReachable(x=goalX, y=goalY, z=curZ))
-        return dist
 
     def gotoPos(self, pos):
-        [goalX, goalY, goalZ] = pos
-        self.arm.goDirectlyTo(x=goalX, y=goalY, z=goalZ, debugPrint=1)		
+        [keyX, keyY, keyZ] = pos
+        self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ, debugPrint=1)		
         print(self.arm.getPos())
-    def gotoNice(self, pos):
-        [goalX, goalY, goalZ] = pos
-        [curX, curY, curZ] = self.arm.getPos()
-        if (curZ < goalZ): # go up and then down into position
-            dist = self.arm.getDistance(goalX, goalY, z=goalZ+25)
-            self.arm.goDirectlyTo(x=goalX, y=goalY, z=goalZ+25, debugPrint=0)
-            self.waitUntilDone(minTime = dist/1000.0, timeout = 0.5)
 
-        self.arm.goDirectlyTo(x=goalX, y=goalY, z=goalZ, debugPrint=0)
+    def gotoNice(self, pos):
+        [keyX, keyY, keyZ] = pos
+        [curX, curY, curZ] = self.arm.getPos()
+        if (curZ < keyZ): # go up and then down into position
+            dist = self.arm.getDistance(keyX, keyY, z=keyZ+10)
+            self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ+10, debugPrint=0)
+            self.waitUntilDone(minTime = dist/500.0, timeout = dist/300.0)
+
+        self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ, debugPrint=0)
         self.waitUntilDone(1.0)
         print(self.arm.getPos())		
     
