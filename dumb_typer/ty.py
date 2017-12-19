@@ -1,7 +1,15 @@
 #!/usr/bin/env python
-# Code to calibrate the meArm by direct driving the motors
-# This uses the Adafruit I2C and Servo libraries for controlling the PCA9685. 
 # License: Public Domain 
+
+# Code to create a typing robot using a keyboard mapping
+# This uses the Adafruit I2C and Servo libraries for controlling the PCA9685. 
+# It also uses the Adafruit I2C and Adafruit_ADS1x15 libraries for reading current.
+# Note that current is read in all servos, no single servo is monitored individually in this code.
+
+# To use this code, start python and run these commands
+# > execfile('ty.py')
+# > ty.pressKey("h")
+# > ty.pressString("hello")
 
 import MeArm_Cal_Jetson_Configuration as cal
 import math
@@ -10,10 +18,6 @@ import TyAdc
 import random
 import time
 import keyboardCalibration as keyCal
-
-VIDEO_CHANNEL = 1
-Y_MIDDLE_ZONE = 100
-GRIPPER_DELAY_DEFAULT = 30
 
 class TyContoller():
 
@@ -24,10 +28,11 @@ class TyContoller():
 	        cal.SHOULDER_MIN_PWM, cal.SHOULDER_MAX_PWM,  cal.SHOULDER_MIN_ANGLE_RAD, cal.SHOULDER_MAX_ANGLE_RAD,
 	        cal.ELBOW_MIN_PWM,    cal.ELBOW_MAX_PWM,     cal.ELBOW_MIN_ANGLE_RAD,    cal.ELBOW_MAX_ANGLE_RAD,
 	        cal.CLAW_MIN_PWM,     cal.CLAW_MAX_PWM,      cal.CLAW_MIN_ANGLE_RAD,     cal.CLAW_MAX_ANGLE_RAD)
-        self.arm.begin(pwmFrequency = cal.PWM_FREQUENCY)     
-        self.open(92)
+        self.arm.begin(pwmFrequency = cal.PWM_FREQUENCY) 
+        time.sleep(0.5)
         self.checkBaselineCurrrent()
         self.gotoNice(keyCal.KEYBOARD_NEUTRAL)
+        self.open(92)
 
     def __del__(self):
         self.adc.exit()
@@ -107,7 +112,7 @@ class TyContoller():
 
         # 1. Goto to the XY location
         dist = self.arm.getDistance(keyX, keyY, origZ)
-        self.arm.goDirectlyTo(x=keyX, y=keyY, z=origZ, debugPrint=debugPrint)		
+        self.arm.gotoPoint(x=keyX, y=keyY, z=origZ, debugPrint=debugPrint)		
         print "goto XY %s %s (%s, %s)" % (keypos, self.arm.getPos(), self.arm.isReachable(x=keyX, y=keyY, z=origZ), dist)
         self.waitUntilDone(minTime = dist/delayDiv, timeout = dist/delayDiv)
 
@@ -119,8 +124,7 @@ class TyContoller():
 
         # 3. Raise key
         print "raise key"
-        self.arm.goDirectlyTo(x=keyX, y=keyY, z=origZ-10, debugPrint=debugPrint)		
-        self.waitUntilDone(minTime = 0.1, timeout = 0.25) # very likely to timeout as it is going up
+        self.arm.gotoPoint(x=keyX, y=keyY, z=origZ-10, debugPrint=debugPrint)		
 
         # 4. Return key to neutral
         print "back to neutral"
@@ -130,7 +134,7 @@ class TyContoller():
 
     def gotoPos(self, pos):
         [keyX, keyY, keyZ] = pos
-        self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ, debugPrint=1)		
+        self.arm.gotoPoint(x=keyX, y=keyY, z=keyZ, debugPrint=1)		
         print(self.arm.getPos())
 
     def gotoNice(self, pos):
@@ -138,18 +142,15 @@ class TyContoller():
         [curX, curY, curZ] = self.arm.getPos()
         if (curZ < keyZ): # go up and then down into position
             dist = self.arm.getDistance(keyX, keyY, z=keyZ+10)
-            self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ+10, debugPrint=0)
-            self.waitUntilDone(minTime = dist/500.0, timeout = dist/300.0)
+            self.arm.gotoPoint(x=keyX, y=keyY, z=keyZ+10, debugPrint=0)
 
-        self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ, debugPrint=0)
-        self.waitUntilDone(1.0)
+        self.arm.gotoPoint(x=keyX, y=keyY, z=keyZ, step=10, debugPrint=0)
+        self.waitUntilDone(0.25)
         print(self.arm.getPos())		
-    
-
+   
 
 if __name__ == '__main__':
     ty = TyContoller()
-#    ty.loop()
 
 
 
