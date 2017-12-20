@@ -1,5 +1,5 @@
 # TyPEpyt
-A robot that can type
+A robot that can type. Maybe. Someday. Baby steps.
 
 # test
 The test directory has the intermediate tests for setting up the MeArm system. 
@@ -7,6 +7,22 @@ The test directory has the intermediate tests for setting up the MeArm system.
 Start with the MeArm_Calibration for Arduino. That is for both direct servo control and inverse kinetmatics (see its README.md). 
 
 Similar code for the MeArm on the Jetson is in python with MeArm_Cal_Jetson being the direct servo control and MeArm_IK_Jetson having the inverse kinematic code.
+
+# laser_cat_demo
+Used for the "On Cats and Typing" presentation, this shows off different motion methods to demonstrate kinematic movement. 
+
+This code also has the laser cat mode which uses a USB web camera to have the arm chase the laser. 
+
+# prototyper
+Hunt-and-peck typing at its worst. 
+
+To use this code, start python and run these commands in Python.
+> execfile('ty.py')
+> ty.pressKey("h")
+> ty.pressString("hello")
+
+Note that this is heavily dependent on the keymap which isn't very stable.
+
 
 # ros_ws
 Robot Operating System (ROS) workspace for catkins. 
