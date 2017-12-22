@@ -35,7 +35,7 @@ class KeyMap():
                 foundChar.append(c)
         return foundChar
 
-    def kvm(self):
+    def kvm(self, debugDraw = False):
         self.clickEvent = False
         ret, frame = self.cam.read()
         cv2.imshow(self.cameraImageName, frame)
@@ -50,11 +50,23 @@ class KeyMap():
             resp = cv2.waitKey(20) & 0xFF
         cv2.destroyAllWindows()
         if self.clickEvent == True:
-            M = self.getHoloM(self.keyImg, frame)
+            M = self.getHoloM(self.keyImg, frame, debugDraw=debugDraw)
             if (M is not None):
                 out = self.transformTtoQ(M, (self.click_x,self.click_y))
-                print out  
-                print self.pixToChar(out)
+                print "Point ", out, " is key: ", self.pixToChar(out)
+        self.getClawPos(frame)
+
+    def getClawPos(self, frame):
+        yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
+        circles = cv2.HoughCircles(yuv[:,:,0],cv2.HOUGH_GRADIENT,1,20,param1=100, param2=30, minRadius=0,maxRadius=100)
+        print (len(circles[0]))
+        def showCircles(circles, frame):
+            circles = np.uint16(np.around(circles))
+            fc = cv2.cvtColor(frame.copy(), cv2.COLOR_RGB2BGR)
+            for i in circles[0,:]:
+                # draw the outer circle
+                cv2.circle(fc,(i[0],i[1]),i[2],(0,255,0),2)
+            plt.imshow(fc),plt.show()
 
 
     def getHoloM(self, img1, img2, threshold=0.7, debugDraw=True):
@@ -109,6 +121,10 @@ class KeyMap():
 
             plt.imshow(img3, 'gray'),plt.show()
         return M
+
+
+
+
 
 # USAGE
 # execfile('TyKey.py')
