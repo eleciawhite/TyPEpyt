@@ -38,9 +38,6 @@ class TyContoller():
         self.adc.exit()
         del self.arm
 
-    def loop(self):
-        pos_goal = self.arm.getPos()
-
     def open(self, percent=75):
         self.arm.gripperClosePercent(percent)
 
