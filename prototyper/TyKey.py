@@ -45,29 +45,52 @@ class KeyMap():
         while self.clickEvent == False and resp != ord('q'):
             ret, frame = self.cam.read()
             cv2.imshow(self.cameraImageName, frame)
-            self.img = frame
+            self.img = frame.copy()
             frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
             resp = cv2.waitKey(20) & 0xFF
         cv2.destroyAllWindows()
         if self.clickEvent == True:
-            M = self.getHoloM(self.keyImg, frame, debugDraw=debugDraw)
-            if (M is not None):
+            self.M, outline = self.getHoloM(self.keyImg, frame, debugDraw=debugDraw)
+            if (self.M is not None):
                 out = self.transformTtoQ(M, (self.click_x,self.click_y))
                 print "Point ", out, " is key: ", self.pixToChar(out)
-        self.getClawPos(frame)
+                claw_location = self.locateClaw(self.img, outline)
+                if (claw_location is not None):
+                    claw_xform = self.transformTtoQ(self.M, claw_location)
+                    print "Claw ", claw_xform, " is key: ", self.pixToChar(claw_xform)
+        
+        return frame, outline
 
-    def getClawPos(self, frame):
+    def locateClaw(self, frame, outline):
         yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
-        circles = cv2.HoughCircles(yuv[:,:,0],cv2.HOUGH_GRADIENT,1,20,param1=100, param2=30, minRadius=0,maxRadius=100)
-        print (len(circles[0]))
-        def showCircles(circles, frame):
-            circles = np.uint16(np.around(circles))
-            fc = cv2.cvtColor(frame.copy(), cv2.COLOR_RGB2BGR)
-            for i in circles[0,:]:
-                # draw the outer circle
-                cv2.circle(fc,(i[0],i[1]),i[2],(0,255,0),2)
-            plt.imshow(fc),plt.show()
+        circles = cv2.HoughCircles(yuv[:,:,2],cv2.HOUGH_GRADIENT,4,200, param1=100, param2=40, minRadius=0,maxRadius=20)
+#cv2.HoughCircles(yuv[:,:,2],cv2.HOUGH_GRADIENT,1,20, param1=100, param2=20, minRadius=0,maxRadius=20)
+#cv2.HoughCircles(yuv[:,:,0],cv2.HOUGH_GRADIENT,1,20,param1=50, param2=35, minRadius=0,maxRadius=20)
+#cv2.HoughCircles(yuv[:,:,2],cv2.HOUGH_GRADIENT,4,200, param1=100, param2=60, minRadius=0,maxRadius=20)
+#cv2.HoughCircles(yuv[:,:,0],cv2.HOUGH_GRADIENT,1,20,param1=100, param2=30, minRadius=0,maxRadius=100)
 
+        if (circles is None):
+            print "Error: Could not locate claw!"
+            return None
+        #else 
+        circles = np.uint16(np.around(circles))
+        goodCircles = []
+        fc = cv2.cvtColor(frame.copy(), cv2.COLOR_RGB2BGR)
+        for i in circles[0,:]:
+            # draw the outer circle
+            if cv2.pointPolygonTest(outline, (i[0],i[1]), False) > 0.0:
+                cv2.circle(fc,(i[0],i[1]),i[2],(0,255,0),2)
+                goodCircles.append(i)
+            else:
+                cv2.circle(fc,(i[0],i[1]),i[2],(255,0,0),2)
+
+        print "There are ", (len(circles[0])), " originally, ", len(goodCircles), " good ones."
+        plt.imshow(fc),plt.show()
+        if len(goodCircles) == 0:
+            claw = None
+        else:
+            claw = (goodCircles[0][0], goodCircles[0][1]) # most accumulation            
+        return claw
 
     def getHoloM(self, img1, img2, threshold=0.7, debugDraw=True):
         MIN_MATCH_COUNT = 10
@@ -102,9 +125,9 @@ class KeyMap():
 
             h,w = img1.shape[0:2]
             pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-            dst = cv2.perspectiveTransform(pts,M)
+            outline = cv2.perspectiveTransform(pts,M)
 
-            img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+            img2 = cv2.polylines(img2,[np.int32(outline)],True,255,3, cv2.LINE_AA)
 
         else:
             print "Not enough matches are found - %d/%d" % (len(good),MIN_MATCH_COUNT)
@@ -120,7 +143,7 @@ class KeyMap():
             img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
 
             plt.imshow(img3, 'gray'),plt.show()
-        return M
+        return M, outline
 
 
 
