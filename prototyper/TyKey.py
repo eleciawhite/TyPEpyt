@@ -52,14 +52,14 @@ class KeyMap():
         if self.clickEvent == True:
             self.M, outline = self.getHoloM(self.keyImg, frame, debugDraw=debugDraw)
             if (self.M is not None):
-                out = self.transformTtoQ(M, (self.click_x,self.click_y))
+                out = self.transformTtoQ(self.M, (self.click_x,self.click_y))
                 print "Point ", out, " is key: ", self.pixToChar(out)
                 claw_location = self.locateClaw(self.img, outline)
                 if (claw_location is not None):
                     claw_xform = self.transformTtoQ(self.M, claw_location)
                     print "Claw ", claw_xform, " is key: ", self.pixToChar(claw_xform)
         
-        return frame, outline
+        return self.img, outline
 
     def locateClaw(self, frame, outline):
         yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)

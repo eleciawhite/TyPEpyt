@@ -2,7 +2,7 @@
 # This details they keyboard layout
 KEYBOARD_OFFSET = [0,0,0] 
 
-KEYBOARD_NEUTRAL = [0, 150, 30]
+KEYBOARD_NEUTRAL = [0, 150, 50]
 
 KEYPIX = {}
 KEYPIX["ESC"] = [  24,  16]

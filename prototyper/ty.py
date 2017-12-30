@@ -17,11 +17,14 @@ import meArm
 import TyAdc
 import random
 import time
-import keyboardCalibration as keyCal
+import keyboardCalibration as KeyCal
+import TyKey as key
+import cv2
+
 
 class TyContoller():
 
-    def __init__(self):
+    def __init__(self, cam):
         self.adc = TyAdc.TyAdc()
         self.arm = meArm.meArm(
 	        cal.BASE_MIN_PWM,     cal.BASE_MAX_PWM,      cal.BASE_MIN_ANGLE_RAD,     cal.BASE_MAX_ANGLE_RAD,
@@ -30,13 +33,19 @@ class TyContoller():
 	        cal.CLAW_MIN_PWM,     cal.CLAW_MAX_PWM,      cal.CLAW_MIN_ANGLE_RAD,     cal.CLAW_MAX_ANGLE_RAD)
         self.arm.begin(pwmFrequency = cal.PWM_FREQUENCY) 
         time.sleep(0.5)
-        self.checkBaselineCurrrent()
-        self.gotoNice(keyCal.KEYBOARD_NEUTRAL)
         self.open(92)
+        self.cam = cam
+        self.keymap = key.KeyMap(cam)
 
     def __del__(self):
         self.adc.exit()
         del self.arm
+
+    def start(self):
+        self.checkBaselineCurrrent()
+        self.gotoNice(KeyCal.KEYBOARD_NEUTRAL)
+        self.open(92)
+        frame, self.keyboardOutline = self.keymap.kvm(debugDraw = True)
 
     def open(self, percent=75):
         self.arm.gripperClosePercent(percent)
@@ -98,14 +107,21 @@ class TyContoller():
     # 2. Press key until current feedback says done
     # 3. Raise key
     # 4. Return key to neutral 
-    def pressKey(self, char, delayDiv=300.0):
+    def press(self, char, delayDiv=300.0):
         debugPrint = 1
-        keypos = list(keyCal.KEYPOS[char]) #make a copy of the location because we'll edit Z
+        goalPos = list(KeyCal.KEYPIX[char]) #make a copy of the location because we'll edit Z
+
+        ret, frame = self.cam.read()
+        curPos = self.keymap.locateClaw(frame, self.keyboardOutline)
+
+        print "Goal pos ", goalPos, " cur pos ", curPos
+        return 
 
         self.checkBaselineCurrrent() 
 
         [keyX, keyY, keyZ] = keypos
-        [origX, origY, origZ] = self.arm.getPos()       # ideally this is the neutral position
+
+#        [origX, origY, origZ] = self.arm.getPos()       # ideally this is the neutral position
 
         # 1. Goto to the XY location
         dist = self.arm.getDistance(keyX, keyY, origZ)
@@ -125,8 +141,7 @@ class TyContoller():
 
         # 4. Return key to neutral
         print "back to neutral"
-        self.gotoNice(keyCal.KEYBOARD_NEUTRAL)
-
+        self.gotoNice(KeyCal.KEYBOARD_NEUTRAL)
 
 
     def gotoPos(self, pos):
@@ -147,7 +162,10 @@ class TyContoller():
    
 
 if __name__ == '__main__':
-    ty = TyContoller()
+    if cam is None:
+        videoChannel = 1
+        cam = cv2.VideoCapture(videoChannel)
+    ty = TyContoller(cam)
 
 
 
