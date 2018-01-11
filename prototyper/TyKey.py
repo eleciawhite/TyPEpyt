@@ -11,6 +11,8 @@ class KeyMap():
         self.keyImg = cv2.imread("keys.png")
         self.cameraImageName = 'Ty View'
         self.clickEvent = False
+        self.outline = None
+        self.cannyThresh = 1000
 
     def mouseClickCallback(self, event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDBLCLK:
@@ -18,14 +20,15 @@ class KeyMap():
             self.click_x = x
             self.click_y = y
 
-    def transformQtoT(self, M, q):
-        a = np.array([[q]], dtype='float32')
-        return cv2.perspectiveTransform(a,M)
+    def transformKeyboardToCameraPos(self, c):
+        pos = KeyCal.KEYPIX[c]
+        a = np.array([[pos]], dtype='float32')
+        return cv2.perspectiveTransform(a,self.M)
 
-    def transformTtoQ(self, M, t):
+    def transformCameraPosToKeyboard(self, M, t):
         a = np.array([[t]], dtype='float32')
         return cv2.perspectiveTransform(a,np.linalg.inv(M))[0][0]
-        
+       
     def pixToChar(self, found):
         foundChar = []
         for c in KeyCal.KEYPIX:
@@ -35,7 +38,7 @@ class KeyMap():
                 foundChar.append(c)
         return foundChar
 
-    def kvm(self, debugDraw = False):
+    def waitForClick(self):
         self.clickEvent = False
         ret, frame = self.cam.read()
         cv2.imshow(self.cameraImageName, frame)
@@ -46,51 +49,87 @@ class KeyMap():
             ret, frame = self.cam.read()
             cv2.imshow(self.cameraImageName, frame)
             self.img = frame.copy()
-            frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
             resp = cv2.waitKey(20) & 0xFF
         cv2.destroyAllWindows()
+        return frame
+
+
+    def kvm(self, debugDraw = False):
+        frame = self.waitForClick()
+
         if self.clickEvent == True:
+            frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
             self.M, outline = self.getHoloM(self.keyImg, frame, debugDraw=debugDraw)
             if (self.M is not None):
-                out = self.transformTtoQ(self.M, (self.click_x,self.click_y))
+                self.outline = outline
+                out = self.transformCameraPosToKeyboard(self.M, (self.click_x,self.click_y))
                 print "Point ", out, " is key: ", self.pixToChar(out)
                 claw_location = self.locateClaw(self.img, outline)
                 if (claw_location is not None):
-                    claw_xform = self.transformTtoQ(self.M, claw_location)
+                    claw_xform = self.transformCameraPosToKeyboard(self.M, claw_location)
                     print "Claw ", claw_xform, " is key: ", self.pixToChar(claw_xform)
         
         return self.img, outline
 
-    def locateClaw(self, frame, outline):
-        yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
-        circles = cv2.HoughCircles(yuv[:,:,2],cv2.HOUGH_GRADIENT,4,200, param1=100, param2=40, minRadius=0,maxRadius=20)
-#cv2.HoughCircles(yuv[:,:,2],cv2.HOUGH_GRADIENT,1,20, param1=100, param2=20, minRadius=0,maxRadius=20)
-#cv2.HoughCircles(yuv[:,:,0],cv2.HOUGH_GRADIENT,1,20,param1=50, param2=35, minRadius=0,maxRadius=20)
-#cv2.HoughCircles(yuv[:,:,2],cv2.HOUGH_GRADIENT,4,200, param1=100, param2=60, minRadius=0,maxRadius=20)
-#cv2.HoughCircles(yuv[:,:,0],cv2.HOUGH_GRADIENT,1,20,param1=100, param2=30, minRadius=0,maxRadius=100)
+    def locateClaw(self, frame = None, outline = None):
+        if (frame is None):
+            print "Frame not passed in."
+            ret, frame = self.cam.read()
+        hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
+        # define range of blue color in HSV
+        lower_blue = np.array([0,20,200])
+        upper_blue = np.array([35,190,255])
+
+        # Threshold the HSV image to get only blue colors
+        mask = cv2.inRange(hsv, lower_blue, upper_blue)
+        d = cv2.dilate(mask, np.ones((2,2),np.uint8), iterations=1)
+        bb = cv2.medianBlur(d, 5)
+        e = cv2.dilate(bb, np.ones((3,3),np.uint8), iterations=2)
+        circles = cv2.HoughCircles(bb,cv2.HOUGH_GRADIENT, 1, 100, 
+                    param1=self.cannyThresh, param2=5, minRadius=5,maxRadius=15)
+        plt.subplot(221)
+        plt.imshow(cv2.Canny(mask, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Mask")
+        plt.subplot(222)
+        plt.imshow(cv2.Canny(bb, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Blur")
+        plt.subplot(223)
+        plt.imshow(cv2.Canny(e, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny erooded Blur")
+        plt.subplot(224)
 
         if (circles is None):
             print "Error: Could not locate claw!"
             return None
-        #else 
-        circles = np.uint16(np.around(circles))
-        goodCircles = []
-        fc = cv2.cvtColor(frame.copy(), cv2.COLOR_RGB2BGR)
-        for i in circles[0,:]:
-            # draw the outer circle
-            if cv2.pointPolygonTest(outline, (i[0],i[1]), False) > 0.0:
-                cv2.circle(fc,(i[0],i[1]),i[2],(0,255,0),2)
-                goodCircles.append(i)
-            else:
-                cv2.circle(fc,(i[0],i[1]),i[2],(255,0,0),2)
 
-        print "There are ", (len(circles[0])), " originally, ", len(goodCircles), " good ones."
-        plt.imshow(fc),plt.show()
+
+        circles = circles[0,:]
+        goodCircles = self.findGoodCircles(circles, outline)
+        fc = self.drawCircles(circles, frame, color = (0,0,255), show = False)
+        self.drawCircles(goodCircles, fc, color = (0, 255,0), show = True)
         if len(goodCircles) == 0:
             claw = None
         else:
             claw = (goodCircles[0][0], goodCircles[0][1]) # most accumulation            
         return claw
+
+    def findGoodCircles(self, circles, outline):
+        if (outline is None):
+            outline = self.outline
+        if (outline is None):
+            print "ERROR!! Run kvm before locate Claw to create keyboard outline!"
+        circles = np.uint16(np.around(circles))
+        goodCircles = []
+        for i in circles:
+            if (outline is not None) and (cv2.pointPolygonTest(outline, (i[0],i[1]), False) > 0.0):
+                goodCircles.append(i)
+        print "There are ", (len(circles[0])), " originally, ", len(goodCircles), " good ones: ", goodCircles
+        return goodCircles
+
+    def drawCircles(self, circles, frame, outline=None, color=(0,255, 255), show = True):            
+        fc = cv2.cvtColor(frame.copy(), cv2.COLOR_RGB2BGR)
+        for i in circles:
+            cv2.circle(fc,(i[0],i[1]),i[2],color,2)
+        if show is True:
+            plt.imshow(fc),plt.show()
+        return cv2.cvtColor(fc, cv2.COLOR_BGR2RGB)
 
     def getHoloM(self, img1, img2, threshold=0.7, debugDraw=True):
         MIN_MATCH_COUNT = 10
@@ -148,13 +187,12 @@ class KeyMap():
 
 
 
-
-# USAGE
-# execfile('TyKey.py')
-#videoChannel = 1
-#cam = cv2.VideoCapture(videoChannel)
-#k = KeyMap(cam)
-#k.kvm()
-
+if __name__ == '__main__':
+    try: cam
+    except NameError: 
+        videoChannel = 1
+        cam = cv2.VideoCapture(videoChannel)
+    k = KeyMap(cam)
+    k.kvm()
 
 

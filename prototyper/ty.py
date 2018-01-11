@@ -20,6 +20,7 @@ import time
 import keyboardCalibration as KeyCal
 import TyKey as key
 import cv2
+import numpy as np
 
 
 class TyContoller():
@@ -38,14 +39,16 @@ class TyContoller():
         self.keymap = key.KeyMap(cam)
 
     def __del__(self):
-        self.adc.exit()
+        self.adc.stop()
         del self.arm
 
     def start(self):
         self.checkBaselineCurrrent()
-        self.gotoNice(KeyCal.KEYBOARD_NEUTRAL)
+        self.adc.stop() # adc fights with display
+        self.gotoServoPos(KeyCal.KEYBOARD_NEUTRAL)
         self.open(92)
         frame, self.keyboardOutline = self.keymap.kvm(debugDraw = True)
+#        self.adc.start()
 
     def open(self, percent=75):
         self.arm.gripperClosePercent(percent)
@@ -102,12 +105,16 @@ class TyContoller():
             self.pressKey(c)
             time.sleep(0.2)
 
-    # 0. At neutral
-    # 1. Go to place above the key, will take a time proportional to the distance
+    # 1. Translate goal keypos from perfect to real-world units.
+    # 1. Translate goal keypos into servo units ?
+    # 1. Get current position in servo units. Translate into real-world units
+    # 1. Set servo to go in small steps
+    # 1. Take picture, check servo position. Adjust goal.
+
     # 2. Press key until current feedback says done
     # 3. Raise key
     # 4. Return key to neutral 
-    def press(self, char, delayDiv=300.0):
+    def pressKey(self, char, delayDiv=300.0):
         debugPrint = 1
         goalPos = list(KeyCal.KEYPIX[char]) #make a copy of the location because we'll edit Z
 
@@ -144,10 +151,52 @@ class TyContoller():
         self.gotoNice(KeyCal.KEYBOARD_NEUTRAL)
 
 
-    def gotoPos(self, pos):
-        [keyX, keyY, keyZ] = pos
-        self.arm.gotoPoint(x=keyX, y=keyY, z=keyZ, debugPrint=1)		
+    def gotoServoPos(self, pos):
+        [x, y, z] = pos
+        self.arm.gotoPoint(x=x, y=y, z=z, debugPrint=1)		
         print(self.arm.getPos())
+
+    def findCamPos(self, c):
+        pos = ty.keymap.transformKeyboardToCameraPos(c)
+        pos = pos.flatten()
+        [goalCamX, goalCamY] = pos
+        goalServoZ = KeyCal.KEYBOARD_NEUTRAL[2]
+        [curServoX, curServoY, curServoZ] = self.arm.getPos()
+        [curCamX, curCamY] = self.keymap.locateClaw()
+        goalServo = cv2.perspectiveTransform(np.array([[pos]], dtype='float32'),self.camToServoM)
+        goalServo = goalServo.flatten()
+        print "Goal Cam ", [goalCamX, goalCamY] 
+        print "Goal Servo ", [goalServo] 
+        print "Cur Cam ", [curCamX, curCamY]
+        print "Cur servo ", [curServoX, curServoY, curServoZ]
+
+
+        self.arm.gotoPoint(x=goalServo[0], y=goalServo[1], z=goalServoZ, debugPrint=1)		
+        print(self.arm.getPos())
+
+#    def calibrateCamServo(self):
+    def cal(self):
+        servoPos = [[-110, 140],    # q
+                    [ 120, 155],    # DEL
+                    [- 95, 100],    # z
+                    [- 40, 105]]    # space
+        neutralZ = 50
+        camPos = []
+        clawPos = []
+        self.adc.stop() # adc fights with display
+        for p in servoPos:            
+            self.gotoServoPos([p[0], p[1], neutralZ]) 
+            self.keymap.waitForClick()
+            camPos.append([self.keymap.click_x, self.keymap.click_y])
+            clawPos.append(self.keymap.locateClaw())
+        self.camToServoM = cv2.getPerspectiveTransform(np.array(camPos, dtype="float32"),
+                                                        np.array(servoPos, dtype="float32"), )
+#        self.adc.start()
+        self.gotoServoPos(KeyCal.KEYBOARD_NEUTRAL)
+        print camPos
+        print clawPos
+        return self.camToServoM
+
 
     def gotoNice(self, pos):
         [keyX, keyY, keyZ] = pos
@@ -162,7 +211,8 @@ class TyContoller():
    
 
 if __name__ == '__main__':
-    if cam is None:
+    try: cam
+    except NameError: 
         videoChannel = 1
         cam = cv2.VideoCapture(videoChannel)
     ty = TyContoller(cam)

@@ -29,8 +29,13 @@ class TyAdc():
     self.timer.start()
 
   
-  def exit(self):
+  def stop(self):
     self.running = False
+
+  def start(self):
+    self.running = True
+    self.idx == -1
+    self.update()
 
   # Timer function is called frequently to sample the adc data one channel at a time
   def update(self):
