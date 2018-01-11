@@ -77,8 +77,9 @@ class KeyMap():
             ret, frame = self.cam.read()
         hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
         # define range of blue color in HSV
-        lower_blue = np.array([0,20,200])
-        upper_blue = np.array([35,190,255])
+#        lower_blue = np.array([0,150,235])
+        lower_blue = np.array([5,150,235])
+        upper_blue = np.array([20,195,255])
 
         # Threshold the HSV image to get only blue colors
         mask = cv2.inRange(hsv, lower_blue, upper_blue)
@@ -86,7 +87,7 @@ class KeyMap():
         bb = cv2.medianBlur(d, 5)
         e = cv2.dilate(bb, np.ones((3,3),np.uint8), iterations=2)
         circles = cv2.HoughCircles(bb,cv2.HOUGH_GRADIENT, 1, 100, 
-                    param1=self.cannyThresh, param2=5, minRadius=5,maxRadius=15)
+                    param1=self.cannyThresh, param2=5, minRadius=0,maxRadius=10)
         plt.subplot(221)
         plt.imshow(cv2.Canny(mask, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Mask")
         plt.subplot(222)
