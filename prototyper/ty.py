@@ -156,48 +156,60 @@ class TyContoller():
         self.arm.gotoPoint(x=x, y=y, z=z, debugPrint=1)		
         print(self.arm.getPos())
 
-    def findCamPos(self, c):
-        pos = ty.keymap.transformKeyboardToCameraPos(c)
-        pos = pos.flatten()
-        [goalCamX, goalCamY] = pos
-        goalServoZ = KeyCal.KEYBOARD_NEUTRAL[2]
-        [curServoX, curServoY, curServoZ] = self.arm.getPos()
-        [curCamX, curCamY] = self.keymap.locateClaw()
-        goalServo = cv2.perspectiveTransform(np.array([[pos]], dtype='float32'),self.camToServoM)
-        goalServo = goalServo.flatten()
-        print "Goal Cam ", [goalCamX, goalCamY] 
-        print "Goal Servo ", [goalServo] 
-        print "Cur Cam ", [curCamX, curCamY]
-        print "Cur servo ", [curServoX, curServoY, curServoZ]
-
-
-        self.arm.gotoPoint(x=goalServo[0], y=goalServo[1], z=goalServoZ, debugPrint=1)		
-        print(self.arm.getPos())
-
-#    def calibrateCamServo(self):
-    def cal(self):
-        servoPos = [[-110, 140],    # q
-                    [ 120, 155],    # DEL
-                    [- 95, 100],    # z
-                    [- 40, 105]]    # space
+    def cal(self): # calibrate the camera vs the servo
+        servo_pos = [[-110, 165],  
+                    [ 100, 175],   
+                    [100, 100],    
+                    [-120, 80]] 
         neutralZ = 50
         camPos = []
         clawPos = []
         self.adc.stop() # adc fights with display
-        for p in servoPos:            
+        for p in servo_pos:            
             self.gotoServoPos([p[0], p[1], neutralZ]) 
             self.keymap.waitForClick()
-            camPos.append([self.keymap.click_x, self.keymap.click_y])
+            camPos.append(self.keymap.clickPoint)
             clawPos.append(self.keymap.locateClaw())
         self.camToServoM = cv2.getPerspectiveTransform(np.array(camPos, dtype="float32"),
-                                                        np.array(servoPos, dtype="float32"), )
+                                                        np.array(servo_pos, dtype="float32"), )
+        self.camToServoMinv = np.linalg.inv(self.camToServoM)
 #        self.adc.start()
         self.gotoServoPos(KeyCal.KEYBOARD_NEUTRAL)
         print camPos
         print clawPos
         return self.camToServoM
 
+    def transformServoPosToCamPos(self, pos): 
+        a = np.array([[[pos[0],pos[1]]]], dtype='float32')
+        return cv2.perspectiveTransform(a,self.camToServoMinv)[0][0]
 
+    def transformCamPosToServoPos(self, pos): 
+        a = np.array([[[pos[0],pos[1]]]], dtype='float32')
+        return cv2.perspectiveTransform(a,self.camToServoM)[0][0]
+
+
+    def clawKey(self, frame = None):  
+        claw_loc = self.keymap.locateClaw(frame=frame)
+        key_pos = self.keymap.transformCameraPosToKeyboard(claw_loc)
+        key = self.keymap.keyPosToChar(key_pos)
+        print "claw at ", claw_loc, " which is ", key_pos, " on the keyboard, character ", key
+        return key
+
+    def servoPosToKey(self, servo_pos):  
+        cam_pos = self.transformServoPosToCamPos(servo_pos)
+        key_pos = self.keymap.transformCameraPosToKeyboard(cam_pos)
+        key = self.keymap.keyPosToChar(key_pos)
+        print "cam pos at ", cam_pos, " which is ", key_pos, " on the keyboard, character ", key
+        return key
+
+    def keyToServoPos(self, key):
+        key_pos = self.keymap.charToKeyPos(key)
+        cam_pos = self.keymap.transformKeyboardToCameraPos(key_pos)
+        servo_pos = self.transformCamPosToServoPos(cam_pos)
+        print "key pos at ", key_pos, " which is ", cam_pos, " on the camera, servo ", servo_pos
+        return servo_pos        
+
+ 
     def gotoNice(self, pos):
         [keyX, keyY, keyZ] = pos
         [curX, curY, curZ] = self.arm.getPos()

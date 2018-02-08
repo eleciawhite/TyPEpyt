@@ -17,19 +17,18 @@ class KeyMap():
     def mouseClickCallback(self, event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDBLCLK:
             self.clickEvent = True
-            self.click_x = x
-            self.click_y = y
+            self.clickPoint = [x, y]
 
     def transformKeyboardToCameraPos(self, c):
         pos = KeyCal.KEYPIX[c]
         a = np.array([[pos]], dtype='float32')
         return cv2.perspectiveTransform(a,self.M)
 
-    def transformCameraPosToKeyboard(self, M, t):
+    def transformCameraPosToKeyboard(self, t):
         a = np.array([[t]], dtype='float32')
-        return cv2.perspectiveTransform(a,np.linalg.inv(M))[0][0]
+        return cv2.perspectiveTransform(a,self.Minv)[0][0]
        
-    def pixToChar(self, found):
+    def keyPosToChar(self, found):
         foundChar = []
         for c in KeyCal.KEYPIX:
             chx = KeyCal.KEYPIX[c][0]
@@ -37,6 +36,9 @@ class KeyMap():
             if abs(chx-found[0]) < 20 and abs(chy-found[1]) < 15:
                 foundChar.append(c)
         return foundChar
+
+    def charToKeyPos(self, c):
+        return KeyCal.KEYPIX[c]
 
     def waitForClick(self):
         self.clickEvent = False
@@ -62,49 +64,48 @@ class KeyMap():
             self.M, outline = self.getHoloM(self.keyImg, frame, debugDraw=debugDraw)
             if (self.M is not None):
                 self.outline = outline
-                out = self.transformCameraPosToKeyboard(self.M, (self.click_x,self.click_y))
-                print "Point ", out, " is key: ", self.pixToChar(out)
+                self.Minv = np.linalg.inv(self.M)
+                out = self.transformCameraPosToKeyboard(self.clickPoint)
+                print "Point ", out, " is key: ", self.keyPosToChar(out)
                 claw_location = self.locateClaw(self.img, outline)
                 if (claw_location is not None):
-                    claw_xform = self.transformCameraPosToKeyboard(self.M, claw_location)
-                    print "Claw ", claw_xform, " is key: ", self.pixToChar(claw_xform)
+                    claw_xform = self.transformCameraPosToKeyboard(claw_location)
+                    print "Claw ", claw_xform, " is key: ", self.keyPosToChar(claw_xform)
         
         return self.img, outline
 
-    def locateClaw(self, frame = None, outline = None):
+    def locateClaw(self, frame = None, outline = None, showDebug=False):
         if (frame is None):
             print "Frame not passed in."
             ret, frame = self.cam.read()
+            self.img = frame
         hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
         # define range of blue color in HSV
-#        lower_blue = np.array([0,150,235])
         lower_blue = np.array([5,150,235])
         upper_blue = np.array([20,195,255])
 
         # Threshold the HSV image to get only blue colors
         mask = cv2.inRange(hsv, lower_blue, upper_blue)
-        d = cv2.dilate(mask, np.ones((2,2),np.uint8), iterations=1)
-        bb = cv2.medianBlur(d, 5)
-        e = cv2.dilate(bb, np.ones((3,3),np.uint8), iterations=2)
-        circles = cv2.HoughCircles(bb,cv2.HOUGH_GRADIENT, 1, 100, 
-                    param1=self.cannyThresh, param2=5, minRadius=0,maxRadius=10)
-        plt.subplot(221)
-        plt.imshow(cv2.Canny(mask, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Mask")
-        plt.subplot(222)
-        plt.imshow(cv2.Canny(bb, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Blur")
-        plt.subplot(223)
-        plt.imshow(cv2.Canny(e, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny erooded Blur")
-        plt.subplot(224)
+        e = cv2.dilate(mask, np.ones((3,3),np.uint8), iterations=2)
+        circles = cv2.HoughCircles(e,cv2.HOUGH_GRADIENT, 1, 100, 
+                    param1=self.cannyThresh, param2=1, minRadius=0,maxRadius=10)
+        if showDebug is True:
+            plt.subplot(221)
+            plt.imshow(cv2.Canny(mask, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Mask")
+            plt.subplot(222)
+            plt.imshow(e, cmap = "gray"), plt.title("Dilated")
+            plt.subplot(223)
+            plt.imshow(cv2.Canny(e, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Dilated")
+            plt.subplot(224)
 
         if (circles is None):
             print "Error: Could not locate claw!"
             return None
 
-
         circles = circles[0,:]
         goodCircles = self.findGoodCircles(circles, outline)
         fc = self.drawCircles(circles, frame, color = (0,0,255), show = False)
-        self.drawCircles(goodCircles, fc, color = (0, 255,0), show = True)
+        self.drawCircles(goodCircles, fc, color = (0, 255,0), show = showDebug)
         if len(goodCircles) == 0:
             claw = None
         else:
