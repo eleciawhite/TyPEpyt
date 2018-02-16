@@ -22,7 +22,7 @@ class KeyMap():
     def transformKeyboardToCameraPos(self, c):
         pos = KeyCal.KEYPIX[c]
         a = np.array([[pos]], dtype='float32')
-        return cv2.perspectiveTransform(a,self.M)
+        return cv2.perspectiveTransform(a,self.M)[0][0]
 
     def transformCameraPosToKeyboard(self, t):
         a = np.array([[t]], dtype='float32')
@@ -74,14 +74,14 @@ class KeyMap():
         
         return self.img, outline
 
-    def locateClaw(self, frame = None, outline = None, showDebug=False):
+    def locateClaw(self, frame = None, outline = None, debugDraw=False):
         if (frame is None):
             print "Frame not passed in."
             ret, frame = self.cam.read()
             self.img = frame
         hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
         # define range of blue color in HSV
-        lower_blue = np.array([5,150,235])
+        lower_blue = np.array([5,150,180])
         upper_blue = np.array([20,195,255])
 
         # Threshold the HSV image to get only blue colors
@@ -89,7 +89,7 @@ class KeyMap():
         e = cv2.dilate(mask, np.ones((3,3),np.uint8), iterations=2)
         circles = cv2.HoughCircles(e,cv2.HOUGH_GRADIENT, 1, 100, 
                     param1=self.cannyThresh, param2=1, minRadius=0,maxRadius=10)
-        if showDebug is True:
+        if debugDraw is True:
             plt.subplot(221)
             plt.imshow(cv2.Canny(mask, self.cannyThresh, self.cannyThresh/2), cmap = "gray"), plt.title("Canny Mask")
             plt.subplot(222)
@@ -105,7 +105,7 @@ class KeyMap():
         circles = circles[0,:]
         goodCircles = self.findGoodCircles(circles, outline)
         fc = self.drawCircles(circles, frame, color = (0,0,255), show = False)
-        self.drawCircles(goodCircles, fc, color = (0, 255,0), show = showDebug)
+        self.drawCircles(goodCircles, fc, color = (0, 255,0), show = debugDraw)
         if len(goodCircles) == 0:
             claw = None
         else:
@@ -122,7 +122,7 @@ class KeyMap():
         for i in circles:
             if (outline is not None) and (cv2.pointPolygonTest(outline, (i[0],i[1]), False) > 0.0):
                 goodCircles.append(i)
-        print "There are ", (len(circles[0])), " originally, ", len(goodCircles), " good ones: ", goodCircles
+        print "There are ", len(circles), " originally, ", len(goodCircles), " good ones: ", goodCircles
         return goodCircles
 
     def drawCircles(self, circles, frame, outline=None, color=(0,255, 255), show = True):            

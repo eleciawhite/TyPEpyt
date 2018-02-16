@@ -21,7 +21,7 @@ import keyboardCalibration as KeyCal
 import TyKey as key
 import cv2
 import numpy as np
-
+import sphinx as sphinx
 
 class TyContoller():
 
@@ -37,6 +37,7 @@ class TyContoller():
         self.open(92)
         self.cam = cam
         self.keymap = key.KeyMap(cam)
+        self.speech = sphinx.SpeechDetector()
 
     def __del__(self):
         self.adc.stop()
@@ -45,8 +46,10 @@ class TyContoller():
     def start(self):
         self.checkBaselineCurrrent()
         self.adc.stop() # adc fights with display
-        self.gotoServoPos(KeyCal.KEYBOARD_NEUTRAL)
+        self.gotoArmPos(KeyCal.KEYBOARD_NEUTRAL)
         self.open(92)
+        print "Check that the camera covers the main part of the keyboard, then click anywhere."
+        print "Next, verify the mapping looks good. Rerun if it doesn't."
         frame, self.keyboardOutline = self.keymap.kvm(debugDraw = True)
 #        self.adc.start()
 
@@ -105,87 +108,85 @@ class TyContoller():
             self.pressKey(c)
             time.sleep(0.2)
 
-    # 1. Translate goal keypos from perfect to real-world units.
-    # 1. Translate goal keypos into servo units ?
-    # 1. Get current position in servo units. Translate into real-world units
-    # 1. Set servo to go in small steps
-    # 1. Take picture, check servo position. Adjust goal.
+    def freshCameraRead(self):
+        for i in range(0,10):
+            ret, frame = self.cam.read() # need to do this several times to flush buffer
+        return frame
 
-    # 2. Press key until current feedback says done
-    # 3. Raise key
-    # 4. Return key to neutral 
-    def pressKey(self, char, delayDiv=300.0):
-        debugPrint = 1
-        goalPos = list(KeyCal.KEYPIX[char]) #make a copy of the location because we'll edit Z
+    def pressKey(self, char, k=0.25, showDebug=False):
+        keyPos = self.keymap.charToKeyPos(char)
+        goalCamPos = self.keymap.transformKeyboardToCameraPos(char)
+        goalArmPos = self.transformCamPosToArmPos(goalCamPos)
+        if showDebug:
+            print "key pos at ", keyPos, " which is ", goalCamPos, " on the camera, arm pos ", goalArmPos
 
-        ret, frame = self.cam.read()
-        curPos = self.keymap.locateClaw(frame, self.keyboardOutline)
+        armPosWithNeutralZ = np.append(goalArmPos, KeyCal.KEYBOARD_NEUTRAL[2])
+        self.gotoArmPos(armPosWithNeutralZ)
+        frame = self.freshCameraRead()
+        clawCamPos = self.keymap.locateClaw(frame)
+        if showDebug:
+            print "Claw located at ", clawCamPos
 
-        print "Goal pos ", goalPos, " cur pos ", curPos
-        return 
+        if clawCamPos is not None:
+            clawCamPos = np.array(clawCamPos, dtype='float32')
+            diffCamPos = goalCamPos - clawCamPos    
+            goalArmPos = self.transformCamPosToArmPos(goalCamPos+(k*diffCamPos))
+            if showDebug:
+                print "diffCam ", diffCamPos," new  goalArmPos ", goalArmPos
 
-        self.checkBaselineCurrrent() 
 
-        [keyX, keyY, keyZ] = keypos
-
-#        [origX, origY, origZ] = self.arm.getPos()       # ideally this is the neutral position
-
-        # 1. Goto to the XY location
-        dist = self.arm.getDistance(keyX, keyY, origZ)
-        self.arm.gotoPoint(x=keyX, y=keyY, z=origZ, debugPrint=debugPrint)		
-        print "goto XY %s %s (%s, %s)" % (keypos, self.arm.getPos(), self.arm.isReachable(x=keyX, y=keyY, z=origZ), dist)
-        self.waitUntilDone(minTime = dist/delayDiv, timeout = dist/delayDiv)
-
-        # 2. Press key until feedback indicates it is done
-        print "key"
-        self.checkBaselineCurrrent() 
-        self.arm.goDirectlyTo(x=keyX, y=keyY, z=keyZ, debugPrint=debugPrint)		
+        armPosWithNeutralZ = np.append(goalArmPos, KeyCal.KEYBOARD_NEUTRAL[2])
+        self.gotoArmPos(armPosWithNeutralZ)
+        armPosDown = np.append(goalArmPos, 0)
+        self.gotoArmPos(armPosDown)
         done = self.waitForPushback(0.25)
 
-        # 3. Raise key
-        print "raise key"
-        self.arm.gotoPoint(x=keyX, y=keyY, z=origZ-10, debugPrint=debugPrint)		
+        self.gotoNice(armPosWithNeutralZ)
 
-        # 4. Return key to neutral
-        print "back to neutral"
-        self.gotoNice(KeyCal.KEYBOARD_NEUTRAL)
+        
 
-
-    def gotoServoPos(self, pos):
+    def gotoArmPos(self, pos, step = 10):
         [x, y, z] = pos
-        self.arm.gotoPoint(x=x, y=y, z=z, debugPrint=1)		
+        self.arm.gotoPoint(x=x, y=y, z=z, step = step, debugPrint=0)		
         print(self.arm.getPos())
 
-    def cal(self): # calibrate the camera vs the servo
-        servo_pos = [[-110, 165],  
-                    [ 100, 175],   
+    def cal(self, neutralZ = 50, step = 10): # calibrate the camera vs the servo
+        armCalPos = [[-110, 165],  
+                    [ 90, 165],   
                     [100, 100],    
-                    [-120, 80]] 
-        neutralZ = 50
-        camPos = []
+                    [-110, 110]] 
         clawPos = []
+        camPos = []
         self.adc.stop() # adc fights with display
-        for p in servo_pos:            
-            self.gotoServoPos([p[0], p[1], neutralZ]) 
+        for p in armCalPos:            
+            self.gotoNice([p[0], p[1], neutralZ]) 
+            print "Click on the blue dot in the camera image."
             self.keymap.waitForClick()
+            claw = self.keymap.locateClaw()
+            while claw is None:
+                print "Retry that one."
+                self.keymap.waitForClick()
+                claw = self.keymap.locateClaw(debugDraw = True)
+            else:
+                print "lenclaw",len(claw)
+            clawPos.append(claw)
             camPos.append(self.keymap.clickPoint)
-            clawPos.append(self.keymap.locateClaw())
-        self.camToServoM = cv2.getPerspectiveTransform(np.array(camPos, dtype="float32"),
-                                                        np.array(servo_pos, dtype="float32"), )
-        self.camToServoMinv = np.linalg.inv(self.camToServoM)
+        self.camToArmM = cv2.getPerspectiveTransform(np.array(clawPos, dtype="float32"),
+                                                        np.array(armCalPos, dtype="float32"), )
+        self.camToArmMinv = np.linalg.inv(self.camToArmM)
 #        self.adc.start()
-        self.gotoServoPos(KeyCal.KEYBOARD_NEUTRAL)
-        print camPos
-        print clawPos
-        return self.camToServoM
+        self.gotoArmPos(KeyCal.KEYBOARD_NEUTRAL)
+        print "Camera positions: ", camPos
+        print "Detected claw positions: ", clawPos
+        return self.camToArmM
 
-    def transformServoPosToCamPos(self, pos): 
+    def transformArmPosToCamPos(self, pos): 
         a = np.array([[[pos[0],pos[1]]]], dtype='float32')
-        return cv2.perspectiveTransform(a,self.camToServoMinv)[0][0]
+        return cv2.perspectiveTransform(a,self.camToArmMinv)[0][0]
 
-    def transformCamPosToServoPos(self, pos): 
+    def transformCamPosToArmPos(self, pos): 
         a = np.array([[[pos[0],pos[1]]]], dtype='float32')
-        return cv2.perspectiveTransform(a,self.camToServoM)[0][0]
+        return cv2.perspectiveTransform(a,self.camToArmM)[0][0]
 
 
     def clawKey(self, frame = None):  
@@ -195,33 +196,34 @@ class TyContoller():
         print "claw at ", claw_loc, " which is ", key_pos, " on the keyboard, character ", key
         return key
 
-    def servoPosToKey(self, servo_pos):  
-        cam_pos = self.transformServoPosToCamPos(servo_pos)
+    def armPosToKey(self, arm_pos):  
+        cam_pos = self.transformArmPosToCamPos(arm_pos)
         key_pos = self.keymap.transformCameraPosToKeyboard(cam_pos)
         key = self.keymap.keyPosToChar(key_pos)
         print "cam pos at ", cam_pos, " which is ", key_pos, " on the keyboard, character ", key
         return key
 
-    def keyToServoPos(self, key):
-        key_pos = self.keymap.charToKeyPos(key)
-        cam_pos = self.keymap.transformKeyboardToCameraPos(key_pos)
-        servo_pos = self.transformCamPosToServoPos(cam_pos)
-        print "key pos at ", key_pos, " which is ", cam_pos, " on the camera, servo ", servo_pos
-        return servo_pos        
 
- 
     def gotoNice(self, pos):
         [keyX, keyY, keyZ] = pos
         [curX, curY, curZ] = self.arm.getPos()
-        if (curZ < keyZ): # go up and then down into position
-            dist = self.arm.getDistance(keyX, keyY, z=keyZ+10)
-            self.arm.gotoPoint(x=keyX, y=keyY, z=keyZ+10, debugPrint=0)
+        if (curZ <= keyZ): # go up and then down into position
+            self.arm.gotoPoint(x=keyX, y=keyY, z=keyZ+15, debugPrint=0)
 
         self.arm.gotoPoint(x=keyX, y=keyY, z=keyZ, step=10, debugPrint=0)
         self.waitUntilDone(0.25)
         print(self.arm.getPos())		
    
-
+    def dictate(self):
+        words = self.speech.run()
+        for w in words:
+            ty.pressString(w)
+            ty.pressString(" ")
+        print "You said: ",
+        for w in words:
+            print w, " ",
+        print
+        
 if __name__ == '__main__':
     try: cam
     except NameError: 
