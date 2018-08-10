@@ -86,34 +86,63 @@
     <axis xyz="0 1 0"/>
     <limit effort="30" velocity="1.0" lower="0.52" upper="2.79" />
   </joint>
+    <link name="upper_arm2">
+    <visual>
+      <geometry>
+        <cylinder length="0.01" radius="0.05"/>
+      </geometry>
+      <material name="yellow"/>
+      <origin rpy="0 0 0" xyz="0 0 0.01"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.01" radius="0.05"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.4"/>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <origin rpy="0 0 0" xyz="0 0 0.01"/>
+      <inertia ixx="0.16" iyy="0.16" izz="0.32" ixy="0" ixz="0" iyz="0"/>
+      <dynamics damping="0.05" friction="0.0"/>
+    </inertial>
+  </link>
+  <joint name="elbow1" type="revolute">
+    <origin rpy="0 3.36 0" xyz="0.0 0.0 0.8"/>
+    <parent link="upper_arm"/>
+    <child link="upper_arm2"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="30" velocity="1.0" lower="0.87" upper="2.44" />
+    <mimic joint="shoulder" multiplier="1" offset="0" />
+  </joint>
   <link name="lower_arm">
     <visual>
       <geometry>
-        <cylinder length="0.8" radius="0.05"/>
+        <cylinder length="0.79" radius="0.05"/>
       </geometry>
       <material name="yellow"/>
       <origin rpy="0 0 0" xyz="0 0 0.4"/>
     </visual>
     <collision>
       <geometry>
-        <cylinder length="0.8" radius="0.05"/>
+        <cylinder length="0.79" radius="0.05"/>
       </geometry>
       <origin rpy="0 0 0" xyz="0 0 0.4"/>
     </collision>
     <inertial>
       <mass value="1.0"/>
-      <origin rpy="0 0 0" xyz="0 0 0.4"/>
+      <origin rpy="0 0 0" xyz="0 0 0.8"/>
       <inertia ixx="0.16" iyy="0.16" izz="0.32" ixy="0" ixz="0" iyz="0"/>
       <dynamics damping="0.05" friction="0.0"/>
     </inertial>
   </link>
   <joint name="elbow" type="revolute">
-    <origin rpy="0 3.36 0" xyz="0.0 0.0 0.8"/>
-    <parent link="upper_arm"/>
+    <origin rpy="0 3.36 0" xyz="0.0 0.0 0.01"/>
+    <parent link="upper_arm2"/>
     <child link="lower_arm"/>
     <axis xyz="0 -1 0"/>
-    <limit effort="30" velocity="1.0" lower="0.87" upper="2.44" />
-  </joint>
+    <limit effort="30" velocity="1.0" lower="1.75" upper="3.0" />
+  </joint>    
   <link name="hand">
     <visual>
       <geometry>
